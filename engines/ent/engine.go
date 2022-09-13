@@ -74,6 +74,16 @@ func Engine(state types.State, config config.Config) {
 				Buffer: parseTemplate("entity.graphqls.go.tmpl", node.Name),
 			})
 		}
+		files = append(files,
+			types.File{
+				Path:   "db/db.go",
+				Buffer: parseTemplate("db.go.tmpl", config.Ent.Package),
+			},
+			types.File{
+				Path:   "server.go",
+				Buffer: parseTemplate("server.go.tmpl", config.Ent.Package),
+			},
+		)
 
 		// utils.WriteJSON("resolvers.json", gqlResolvers)
 		WriteResolvers(gqlResolvers, config)
