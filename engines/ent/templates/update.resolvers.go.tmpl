@@ -1,0 +1,4 @@
+// Update{{.}} is the resolver for the update{{.}} field.
+func (r *mutationResolver) Update{{.}}(ctx context.Context, id int, input ent.Update{{.}}Input) (*ent.{{.}}, error) {
+{{"\t"}}return ent.FromContext(ctx).{{.}}.UpdateOneID(id).SetInput(input).Save(ctx)
+}

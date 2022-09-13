@@ -1,0 +1,4 @@
+// {{.}} is the resolver for the {{.}} field.
+func (r *queryResolver) {{.}}(ctx context.Context, id int) (*ent.{{.}}, error) {
+{{"\t"}}return r.Client.{{.}}.Get(ctx, id)
+}

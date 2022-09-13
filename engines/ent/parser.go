@@ -1,0 +1,367 @@
+package ent
+
+import (
+	"log"
+	"strings"
+
+	"vrd/config"
+	"vrd/types"
+
+	"github.com/codemodus/kace"
+)
+
+func Parse(state types.State, config config.Config) []Node {
+
+	nodes := make([]Node, 0)
+
+	for _, table := range state.TableState.Tables {
+
+		// error table has no name
+		if sClean(table.Name) == "" {
+			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
+		}
+
+		node := Node{
+			ID:      table.Id,
+			Name:    table.Name,
+			Comment: sClean(table.Comment),
+			Imports: []string{
+				"\t\"entgo.io/ent\"",
+				"\t\"entgo.io/ent/dialect/entsql\"",
+				"\t\"entgo.io/ent/schema\"",
+			},
+		}
+
+		if config.Ent.Graphql {
+			node.Imports = append(node.Imports, "\t\"entgo.io/contrib/entgql\"")
+		}
+
+		node.Fields = make([]Field, 0)
+
+		for _, column := range table.Columns {
+
+			columnErrors(column, table.Name)
+
+			if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
+				field := parseColumn(column, config)
+
+				if strings.Contains(strings.ToLower(field.Type), "time") && !In("\t\"time\"", node.Imports) {
+					node.Imports = append(node.Imports, "\t\"time\"")
+				}
+
+				node.Fields = append(node.Fields, field)
+			}
+		}
+
+		node.Edges = make([]Edge, 0)
+
+		for _, relationship := range state.RelationshipState.Relationships {
+			edge := Edge{
+				ID: relationship.Id,
+			}
+
+			options := []string{}
+
+			if relationship.Start.TableId == table.Id {
+				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
+				edge.Direction = "To"
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
+				edge.Node = findTable(&state, relationship.End.TableId).Name
+				node.Edges = append(node.Edges, edge)
+			}
+
+			if relationship.End.TableId == table.Id {
+				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
+				edge.Direction = "From"
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
+				edge.Node = findTable(&state, relationship.Start.TableId).Name
+				edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
+
+				// options
+				switch relationship.RelationshipType {
+				case "ZeroOne", "ZeroN":
+					options = append(options, "Unique()")
+				case "OneOnly", "OneN":
+					options = append(options, "Unique()", "Required()")
+				}
+
+				options = append(options, "Ref(\""+edge.Reference+"\")")
+
+				edge.Options = options
+				node.Edges = append(node.Edges, edge)
+			}
+
+		}
+
+		if len(node.Edges) > 0 {
+			node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/edge\"")
+		}
+
+		if len(node.Fields) > 0 {
+			node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/field\"")
+		}
+
+		tableName := sClean(table.Comment)
+		if tableName == "" {
+			tableName = table.Snakes(sClean(table.Name))
+		}
+
+		node.Annotations = []string{
+			"\t\tentsql.Annotation{Table: \"" + tableName + "\"},",
+		}
+
+		if config.Ent.Graphql {
+			node.Annotations = append(node.Annotations, []string{
+				"\t\tentgql.QueryField(\"" + kace.Camel(node.Comment) + "\"),",
+				"\t\tentgql.RelayConnection(),",
+				"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),",
+			}...)
+		}
+
+		nodes = append(nodes, node)
+	}
+
+	return nodes
+}
+
+// Helpers
+func findColumn(state *types.State, tableId string, columnId string) *types.Column {
+	for i, table := range state.TableState.Tables {
+		for j, column := range table.Columns {
+			if column.Id == columnId {
+				return &state.TableState.Tables[i].Columns[j]
+			}
+		}
+	}
+	return nil
+}
+
+func findTable(state *types.State, tableId string) *types.Table {
+	for i, table := range state.TableState.Tables {
+		if table.Id == tableId {
+			return &state.TableState.Tables[i]
+		}
+	}
+	return nil
+}
+
+func parseColumn(column types.Column, config config.Config) Field {
+	datatype := parseType(column.DataType)
+	options := []string{}
+	annotations := []string{}
+	gqlSkips := []string{}
+	enumValues := []string{}
+	defaultValue := parseDefault(datatype, column.Default)
+	commentOptions := strings.Split(sClean(column.Comment), "|")
+
+	for _, cop := range commentOptions {
+		if strings.Contains(cop, "skip") {
+			cop = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(cop, "skip", ""), "(", ""), ")", "")
+			skips := strings.Split(cop, ",")
+			for _, skip := range skips {
+				switch skip {
+				case "all":
+					gqlSkips = append(gqlSkips, "entgql.SkipAll")
+				case "type":
+					gqlSkips = append(gqlSkips, "entgql.SkipType")
+				case "create":
+					gqlSkips = append(gqlSkips, "entgql.SkipMutationCreateInput")
+				case "update":
+					gqlSkips = append(gqlSkips, "entgql.SkipMutationUpdateInput")
+				case "where":
+					gqlSkips = append(gqlSkips, "entgql.SkipWhereInput")
+				}
+
+			}
+		}
+
+		if strings.Contains(cop, "=") {
+			arr := strings.Split(cop, "=")
+
+			if arr[0] == "-upd" {
+				if datatype == "String" || datatype == "Bytes" || datatype == "Enum" {
+					options = append(options, "UpdateDefault(\""+arr[1]+"\")")
+				} else {
+					options = append(options, "UpdateDefault("+arr[1]+")")
+				}
+			}
+
+			if datatype == "String" || datatype == "Bytes" {
+				switch arr[0] {
+				case "min":
+					options = append(options, "MinLen("+arr[1]+")")
+
+				case "max":
+					options = append(options, "MaxLen("+arr[1]+")")
+				}
+			}
+
+			if datatype == "String" && arr[0] == "match" {
+				options = append(options, "Match(\""+arr[1]+"\")")
+			}
+
+			if strings.Contains(datatype, "Int") || strings.Contains(datatype, "Float") {
+				switch arr[0] {
+				case "min":
+					options = append(options, "Min("+arr[1]+")")
+
+				case "max":
+					options = append(options, "Max("+arr[1]+")")
+
+				case "range":
+					mnx := strings.Split(arr[1], ",")
+					options = append(options, "Range("+mnx[0]+", "+mnx[1]+")")
+				}
+			}
+		}
+	}
+
+	if datatype == "String" || datatype == "Bytes" {
+		if strings.Contains(column.Comment, "-nem") {
+			options = append(options, "NotEmpty()")
+		}
+	}
+	if strings.Contains(datatype, "Int") || strings.Contains(datatype, "Float") {
+		if strings.Contains(column.Comment, "-pos") {
+			options = append(options, "Positive()")
+		}
+		if strings.Contains(column.Comment, "-neg") {
+			options = append(options, "Negative()")
+		}
+		if strings.Contains(column.Comment, "-nneg") {
+			options = append(options, "NonNegative()")
+		}
+	}
+
+	if column.Option.Unique {
+		options = append(options, "Unique()")
+	}
+
+	if column.Option.AutoIncrement {
+		options = append(options, "AutoIncrement()")
+	}
+
+	if datatype == "Enum" {
+		enumValues = parseEnumValues(column.DataType)
+		if config.Ent.Graphql {
+			enOp := []string{}
+			for _, v := range enumValues {
+				enOp = append(enOp, kace.Pascal(strings.ToLower(v)), kace.SnakeUpper(v))
+			}
+			options = append(options, "NamedValues(\""+strings.Join(enOp, "\", \"")+"\")")
+		} else {
+			options = append(options, "Values(\""+kace.Pascal(strings.Join(enumValues, "\", \""))+"\")")
+		}
+	}
+
+	if len(sClean(defaultValue)) > 0 {
+
+		if datatype == "Enum" {
+			if config.Ent.Graphql {
+				options = append(options, "Default("+kace.SnakeUpper(defaultValue)+")")
+
+			} else {
+				options = append(options, "Default("+kace.Pascal(defaultValue)+")")
+			}
+		} else {
+			options = append(options, "Default("+defaultValue+")")
+		}
+	}
+
+	if strings.Contains(column.Comment, "-im") {
+		options = append(options, "Immutable()")
+	}
+
+	if strings.Contains(column.Comment, "-s") {
+		options = append(options, "Sensitive()")
+		if config.Ent.Graphql {
+			annotations = append(annotations, []string{
+				"entgql.Skip(entgql.SkipType, entgql.SkipWhereInput)",
+			}...)
+		}
+	} else {
+		if config.Ent.Graphql {
+			annotations = append(annotations, []string{
+				"entgql.OrderField(\"" + strings.ToUpper(column.Name) + "\")",
+			}...)
+		}
+	}
+
+	if !column.Option.NotNull {
+		options = append(options, "Optional()", "Nillable()")
+	}
+
+	if strings.Contains(column.Comment, "-op") {
+		options = append(options, "Optional()")
+	}
+
+	if len(gqlSkips) > 0 {
+		annotations = append(annotations, "entgql.Skip("+strings.Join(gqlSkips, ", ")+")")
+	}
+
+	options = append(options, "Annotations("+strings.Join(annotations, ", ")+")")
+
+	return Field{
+		ID:          column.Id,
+		Name:        column.Name,
+		Type:        datatype,
+		Options:     options,
+		EnumValues:  enumValues,
+		Default:     defaultValue,
+		Comment:     column.Comment,
+		Annotations: annotations,
+	}
+}
+
+func parseType(datatype string) string {
+	if strings.Contains(strings.ToUpper(datatype), "ENUM") {
+		return "Enum"
+	}
+	t := EntTypes[types.VuerdTypes[strings.ToLower(datatype)]]
+
+	if t != "" {
+		return t
+	}
+
+	return datatype
+}
+
+func parseEnumValues(datatype string) []string {
+	if !strings.Contains(datatype, "ENUM") {
+		return nil
+	}
+	return strings.Split(sClean(strings.Split(strings.Split(datatype, "(")[1], ")")[0]), ",")
+}
+
+func parseDefault(datatype string, defaultVal string) string {
+	if (datatype == "String" || datatype == "Enum") && len(sClean(defaultVal)) > 0 {
+		return "\"" + defaultVal + "\""
+	}
+	return defaultVal
+}
+
+// Helper
+func In[T int | float32 | string](value T, list []T) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+func columnErrors(column types.Column, table string) {
+	if sClean(column.Name) == "" {
+		log.Fatalf("Parser: Error column has no name %s", table)
+	}
+
+	if sClean(column.DataType) == "" {
+		log.Fatalf("Parser: Error column has no datatype %s.%s", table, column.Name)
+	}
+
+	if column.Ui.Fk && (sClean(column.Comment) == "" || len(strings.Split(column.Comment, "|")) != 2) {
+		log.Fatalf("Parser: Error column fk comment edge malformed %s.%s", table, column.Name)
+	}
+}
+
+func sClean(s string) string { return strings.ReplaceAll(s, " ", "") }

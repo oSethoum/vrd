@@ -1,0 +1,4 @@
+// Create{{.}} is the resolver for the create{{.}} field.
+func (r *mutationResolver) Create{{.}}(ctx context.Context, input ent.Create{{.}}Input) (*ent.{{.}}, error) {
+	return ent.FromContext(ctx).{{.}}.Create().SetInput(input).Save(ctx)
+}

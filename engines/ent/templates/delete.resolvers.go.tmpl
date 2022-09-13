@@ -1,0 +1,5 @@
+// Delete{{.}} is the resolver for the delete{{.}} field.
+func (r *mutationResolver) Delete{{.}}(ctx context.Context, id int) (*ent.{{.}}, error) {
+	entity, _ := r.Client.{{.}}.Get(ctx, id)
+	return entity, ent.FromContext(ctx).{{.}}.DeleteOneID(id).Exec(ctx)
+}

@@ -1,0 +1,9 @@
+extend type Query {
+  {{.}}(id: ID!): {{.}}
+}
+
+extend type Mutation {
+  create{{.}}(input: Create{{.}}Input!): {{.}}!
+  update{{.}}(id: ID!, input: Update{{.}}Input!): {{.}}!
+  delete{{.}}(id: ID!): {{.}}!
+}

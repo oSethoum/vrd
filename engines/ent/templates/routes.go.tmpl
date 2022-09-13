@@ -1,0 +1,19 @@
+package routes
+
+import (
+	"{{.}}/ent"
+	"{{.}}/handlers"
+
+	"github.com/labstack/echo/v4"
+)
+
+func Init(e *echo.Echo, client *ent.Client) {
+	e.POST("/login", handlers.Login)
+
+	r := e.Group("/")
+	// r.Use(handlers.Protected())
+	r.GET("/", handlers.PlaygroundHandler())
+	r.POST("query", handlers.GraphqlHandlers(client))
+	r.Any("subscriptions", handlers.GraphqlWsHandler(client))
+	r.GET("ws", handlers.PlaygroundWsHandler())
+}

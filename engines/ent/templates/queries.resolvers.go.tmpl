@@ -1,0 +1,4 @@
+// {{.Plural .Name}} is the resolver for the {{.Plural .Name}} field.
+func (r *queryResolver) {{.Plural .Name}}(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.{{.Name}}Order, where *ent.{{.Name}}WhereInput) (*ent.{{.Name}}Connection, error) {
+{{"\t"}}return r.Client.{{.Name}}.Query().Paginate(ctx, after, first, before, last, ent.With{{.Name}}Order(orderBy), ent.With{{.Name}}Filter(where.Filter))
+}
