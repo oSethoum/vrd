@@ -8,6 +8,7 @@ import (
 	"vrd/types"
 
 	"github.com/codemodus/kace"
+	"github.com/gertd/go-pluralize"
 )
 
 func Parse(state types.State, config config.Config) []Node {
@@ -15,8 +16,6 @@ func Parse(state types.State, config config.Config) []Node {
 	nodes := make([]Node, 0)
 
 	for _, table := range state.TableState.Tables {
-
-		// error table has no name
 		if sClean(table.Name) == "" {
 			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
 		}
@@ -65,19 +64,43 @@ func Parse(state types.State, config config.Config) []Node {
 			if relationship.Start.TableId == table.Id {
 				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
 				edge.Direction = "To"
-				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
 				edge.Node = findTable(&state, relationship.End.TableId).Name
 				node.Edges = append(node.Edges, edge)
+
+				// TODO:investigate
+				if len(strings.Split(endColumn.Comment, "|")) < 2 {
+					switch relationship.RelationshipType {
+					case "ZeroN", "OneN":
+						edge.Name = kace.Camel(pluralize.NewClient().Plural(edge.Node))
+					case "ZeroOne", "OneOnly":
+						edge.Name = kace.Camel(edge.Node)
+					}
+				} else {
+					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
+				}
+
 			}
 
 			if relationship.End.TableId == table.Id {
 				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
 				edge.Direction = "From"
-				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
 				edge.Node = findTable(&state, relationship.Start.TableId).Name
-				edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
 
-				// options
+				if len(strings.Split(endColumn.Comment, "|")) < 2 {
+					etName := findTable(&state, relationship.End.TableId).Name
+					edge.Name = kace.Camel(edge.Node)
+
+					switch relationship.RelationshipType {
+					case "OneN", "ZeroN":
+						edge.Reference = kace.Camel(pluralize.NewClient().Plural(etName))
+					case "OneOnly", "ZeroOne":
+						edge.Reference = kace.Camel(etName)
+					}
+				} else {
+					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
+					edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
+				}
+
 				switch relationship.RelationshipType {
 				case "ZeroOne", "ZeroN":
 					options = append(options, "Unique()")
@@ -103,7 +126,7 @@ func Parse(state types.State, config config.Config) []Node {
 
 		tableName := sClean(table.Comment)
 		if tableName == "" {
-			tableName = table.Snakes(sClean(table.Name))
+			tableName = table.Snakes(multiPlural(table.Name))
 		}
 
 		node.Annotations = []string{
@@ -358,10 +381,16 @@ func columnErrors(column types.Column, table string) {
 	if sClean(column.DataType) == "" {
 		log.Fatalf("Parser: Error column has no datatype %s.%s", table, column.Name)
 	}
-
-	if column.Ui.Fk && (sClean(column.Comment) == "" || len(strings.Split(column.Comment, "|")) != 2) {
-		log.Fatalf("Parser: Error column fk comment edge malformed %s.%s", table, column.Name)
-	}
 }
 
 func sClean(s string) string { return strings.ReplaceAll(s, " ", "") }
+
+func multiPlural(s string) string {
+	s = kace.Snake(s)
+	ss := strings.Split(s, "_")
+	vv := ""
+	for _, v := range ss {
+		vv += kace.Pascal(pluralize.NewClient().Plural(v))
+	}
+	return vv
+}

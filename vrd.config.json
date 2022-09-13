@@ -1,0 +1,11 @@
+{
+  "input": "db.vuerd.json",
+  "output": "./output",
+  "ent": {
+    "package": "app",
+    "graphql": true,
+    "echo": true,
+    "auth": true,
+    "privacy": true
+  }
+}

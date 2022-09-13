@@ -10,6 +10,7 @@ import (
 
 	"vrd/config"
 	"vrd/types"
+	"vrd/utils"
 
 	"github.com/codemodus/kace"
 )
@@ -19,7 +20,7 @@ var Assets embed.FS
 
 func Engine(state types.State, config config.Config) {
 	nodes := Parse(state, config)
-	// utils.WriteJSON("output.json", nodes)
+	utils.WriteJSON("output.json", nodes)
 	files := []types.File{}
 
 	entSchemas := []EntSchema{}
