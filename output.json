@@ -59,7 +59,7 @@
       {
         "id": "601621e3-e58a-485f-8cb2-52154808b36a",
         "node": "Todo",
-        "name": "",
+        "name": "todos",
         "reference": "",
         "options": null,
         "direction": "To",

@@ -65,9 +65,7 @@ func Parse(state types.State, config config.Config) []Node {
 				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
 				edge.Direction = "To"
 				edge.Node = findTable(&state, relationship.End.TableId).Name
-				node.Edges = append(node.Edges, edge)
 
-				// TODO:investigate
 				if len(strings.Split(endColumn.Comment, "|")) < 2 {
 					switch relationship.RelationshipType {
 					case "ZeroN", "OneN":
@@ -78,6 +76,8 @@ func Parse(state types.State, config config.Config) []Node {
 				} else {
 					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
 				}
+
+				node.Edges = append(node.Edges, edge)
 
 			}
 
