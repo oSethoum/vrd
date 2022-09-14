@@ -13,7 +13,7 @@ func Init(e *echo.Echo) {
 
 	r := e.Group("/")
 	// r.Use(handlers.Protected())
-	r.GET("/", handlers.PlaygroundHandler())
+	r.GET("", handlers.PlaygroundHandler())
 	r.POST("query", handlers.GraphqlHandlers(db.DB))
 	r.Any("subscriptions", handlers.GraphqlWsHandler(db.DB))
 	r.GET("ws", handlers.PlaygroundWsHandler())
