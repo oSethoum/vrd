@@ -2,7 +2,7 @@
 func ({{.Name}}) Fields() []ent.Field {
 {{"\t"}}return []ent.Field{
 {{- range .Fields}}
-{{"\t\t"}}field.{{.Type}}("{{.Name}}"){{.Join .Options "." "."}}{{.Join .Annotations ".Annotations(" ", " ")" }},
+{{"\t\t"}}field.{{.Type}}("{{.Name}}"){{.Join .Options "." "."}},
 {{- end}}
 {{"\t"}}}
 }

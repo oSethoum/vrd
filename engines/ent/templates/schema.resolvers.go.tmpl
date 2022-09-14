@@ -20,8 +20,19 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []int) ([]ent.Noder, erro
 }
 
 {{range .Nodes}}
-// {{.Plural .Name}} is the resolver for the {{.Plural .Name}} field.
-func (r *queryResolver) {{.Plural .Name}}(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.{{.Name}}Order, where *ent.{{.Name}}WhereInput) (*ent.{{.Name}}Connection, error) {
+// {{.MultiPlural .Name}} is the resolver for the {{.MultiPlural .Name}} field.
+func (r *queryResolver) {{.MultiPlural .Name}}(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.{{.Name}}Order, where *ent.{{.Name}}WhereInput) (*ent.{{.Name}}Connection, error) {
 {{"\t"}}return r.Client.{{.Name}}.Query().Paginate(ctx, after, first, before, last, ent.With{{.Name}}Order(orderBy), ent.With{{.Name}}Filter(where.Filter))
 }
 {{end}}
+
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+type queryResolver struct{ *Resolver }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+type mutationResolver struct{ *Resolver }

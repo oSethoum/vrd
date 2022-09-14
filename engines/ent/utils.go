@@ -28,19 +28,19 @@ func WriteResolvers(resolvers []GQlResolver, c config.Config) {
 	cwd, _ := os.Getwd()
 
 	for _, r := range resolvers {
-		_, err := os.Stat(path.Join(cwd, r.Path))
-		if os.IsNotExist(err) {
-			WriteFile(types.File{
-				Path: r.Path,
-				Buffer: strings.Join([]string{
-					"package resolvers\n",
-					r.Query,
-					r.Create,
-					r.Update,
-					r.Delete,
-				}, "\n"),
-			}, c)
-		}
+		_, _ = os.Stat(path.Join(cwd, r.Path))
+		//if os.IsNotExist(err) {
+		WriteFile(types.File{
+			Path: r.Path,
+			Buffer: strings.Join([]string{
+				"package resolvers",
+				r.Query,
+				r.Create,
+				r.Update,
+				r.Delete,
+			}, "\n\n"),
+		}, c)
+		//}
 	}
 }
 
@@ -48,17 +48,17 @@ func WriteSchemas(schemas []EntSchema, c config.Config) {
 	cwd, _ := os.Getwd()
 
 	for _, s := range schemas {
-		_, err := os.Stat(path.Join(cwd, s.Path))
-		if os.IsNotExist(err) {
-			WriteFile(types.File{
-				Path: s.Path,
-				Buffer: strings.Join([]string{
-					s.Schema,
-					s.Fields,
-					s.Edges,
-					s.Annotations,
-				}, "\n"),
-			}, c)
-		}
+		_, _ = os.Stat(path.Join(cwd, s.Path))
+		//if os.IsNotExist(err) {
+		WriteFile(types.File{
+			Path: s.Path,
+			Buffer: strings.Join([]string{
+				s.Schema,
+				s.Fields,
+				s.Edges,
+				s.Annotations,
+			}, "\n\n"),
+		}, c)
+		//}
 	}
 }

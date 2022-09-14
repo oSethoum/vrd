@@ -2,9 +2,9 @@ package schema
 
 import (
 {{- range .Imports}}
-{{.}},
+{{.}}
 {{- end}}
 )
 type {{.Name}} struct {
-    ent.Schema,
+    ent.Schema
 }

@@ -1,0 +1,1 @@
+go install -ldflags="-s"

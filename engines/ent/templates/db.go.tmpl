@@ -8,7 +8,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func Init() *ent.Client {
+var DB *ent.Client
+
+func Init() {
 	db, err := ent.Open("sqlite3", "file:db.sqlite?_fk=1")
 
 	if err != nil {
@@ -21,5 +23,5 @@ func Init() *ent.Client {
 		panic(err)
 	}
 
-	return db
+	DB = db
 }

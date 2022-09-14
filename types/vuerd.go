@@ -236,6 +236,16 @@ func (Helper) Plural(s string) string {
 	return pluralize.NewClient().Plural(s)
 }
 
+func (Helper) MultiPlural(s string) string {
+	s = kace.Snake(s)
+	ss := strings.Split(s, "_")
+	vv := ""
+	for _, v := range ss {
+		vv += kace.Pascal(pluralize.NewClient().Plural(v))
+	}
+	return vv
+}
+
 func (Helper) Singular(s string) string {
 	return pluralize.NewClient().Singular(s)
 }

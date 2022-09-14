@@ -8,17 +8,17 @@ import (
 )
 
 func main() {
-	db :=  db.Init()
-    defer db.Close()
+	db.Init()
+    defer db.DB.Close()
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{\"*\"},
+		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
-	routes.Init(e, db)
+	routes.Init(e)
 
 	e.Logger.Fatal(e.Start(":3001"))
 

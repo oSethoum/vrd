@@ -20,6 +20,7 @@ type Edge struct {
 	Node        string   `json:"node"`
 	Name        string   `json:"name"`
 	Reference   string   `json:"reference"`
+	Through     string   `json:"through"`
 	Options     []string `json:"options"`
 	Direction   string   `json:"direction"` // To | From
 	Annotations []string `json:"annotations"`
@@ -48,6 +49,7 @@ type EntSchema struct {
 
 type GQlResolver struct {
 	Path    string `json:"path"`
+	Head    string `json:"Head"`
 	Queries string `json:"queries"`
 	Query   string `json:"query"`
 	Create  string `json:"create"`
@@ -69,4 +71,18 @@ var EntTypes = map[string]string{
 	"json":     "Json",
 	"datetime": "Time",
 	"time":     "Time",
+}
+
+var ComparableTypes = []string{
+	"Int",
+	"Int64",
+	"Float",
+	"UUID",
+	"Float64",
+	"Int",
+	"Bool",
+	"String",
+	"String",
+	"Time",
+	"UUID",
 }

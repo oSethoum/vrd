@@ -131,7 +131,7 @@ func Parse(state types.State, config config.Config) []Node {
 
 		if config.Ent.Graphql {
 			node.Annotations = append(node.Annotations, []string{
-				"\t\tentgql.QueryField(\"" + kace.Camel(node.Comment) + "\")",
+				"\t\tentgql.QueryField(\"" + kace.Camel(tableName) + "\")",
 				"\t\tentgql.RelayConnection()",
 				"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
 			}...)
@@ -298,7 +298,7 @@ func parseColumn(column types.Column, config config.Config) Field {
 			}...)
 		}
 	} else {
-		if config.Ent.Graphql {
+		if config.Ent.Graphql && In(datatype, ComparableTypes) {
 			annotations = append(annotations, []string{
 				"entgql.OrderField(\"" + strings.ToUpper(column.Name) + "\")",
 			}...)

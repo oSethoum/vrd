@@ -57,13 +57,22 @@ func Engine(state types.State, config config.Config) {
 				Path:   "gqlgen.yml",
 				Buffer: parseTemplate("gqlgen.go.tmpl", config.Ent.Package),
 			},
+			types.File{
+				Path:   "graph/resolvers/resolver.go",
+				Buffer: parseTemplate("resolver.go.tmpl", config.Ent.Package),
+			},
+			types.File{
+				Path:   "handlers/handlers.go",
+				Buffer: parseTemplate("handlers.go.tmpl", config.Ent.Package),
+			},
 		)
 
 		gqlResolvers := []GQlResolver{}
 
 		for _, node := range nodes {
 			gqlResolvers = append(gqlResolvers, GQlResolver{
-				Path:    fmt.Sprintf("graph/resolvers/%s.resolver.go", kace.Snake(node.Name)),
+				Path:    fmt.Sprintf("graph/resolvers/%s.resolvers.go", kace.Snake(node.Name)),
+				Head:    parseTemplate("entity.resolver.go.tmpl", config.Ent.Package),
 				Query:   parseTemplate("query.resolvers.go.tmpl", node.Name),
 				Queries: parseTemplate("queries.resolvers.go.tmpl", QueriesData{Name: node.Name}),
 				Create:  parseTemplate("create.resolvers.go.tmpl", node.Name),
