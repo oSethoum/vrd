@@ -11,6 +11,9 @@ import (
 	"github.com/gertd/go-pluralize"
 )
 
+// TODO: support many to many relationshipt
+// TODO: support mixins
+
 func Parse(state types.State, config config.Config) []Node {
 
 	nodes := make([]Node, 0)
