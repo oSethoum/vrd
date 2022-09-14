@@ -2,7 +2,7 @@
 func ({{.Name}}) Annotations() []schema.Annotation {
 {{"\t"}}return []schema.Annotation{
 {{- range .Annotations}}
-{{.}}
+{{.}},
 {{- end}}
 {{"\t"}}}
 }

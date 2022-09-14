@@ -38,7 +38,6 @@ func Parse(state types.State, config config.Config) []Node {
 		node.Fields = make([]Field, 0)
 
 		for _, column := range table.Columns {
-
 			columnErrors(column, table.Name)
 
 			if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
@@ -58,7 +57,6 @@ func Parse(state types.State, config config.Config) []Node {
 			edge := Edge{
 				ID: relationship.Id,
 			}
-
 			options := []string{}
 
 			if relationship.Start.TableId == table.Id {
@@ -76,9 +74,7 @@ func Parse(state types.State, config config.Config) []Node {
 				} else {
 					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
 				}
-
 				node.Edges = append(node.Edges, edge)
-
 			}
 
 			if relationship.End.TableId == table.Id {
@@ -130,20 +126,19 @@ func Parse(state types.State, config config.Config) []Node {
 		}
 
 		node.Annotations = []string{
-			"\t\tentsql.Annotation{Table: \"" + tableName + "\"},",
+			"\t\tentsql.Annotation{Table: \"" + tableName + "\"}",
 		}
 
 		if config.Ent.Graphql {
 			node.Annotations = append(node.Annotations, []string{
-				"\t\tentgql.QueryField(\"" + kace.Camel(node.Comment) + "\"),",
-				"\t\tentgql.RelayConnection(),",
-				"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),",
+				"\t\tentgql.QueryField(\"" + kace.Camel(node.Comment) + "\")",
+				"\t\tentgql.RelayConnection()",
+				"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
 			}...)
 		}
 
 		nodes = append(nodes, node)
 	}
-
 	return nodes
 }
 
