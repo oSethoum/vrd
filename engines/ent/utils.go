@@ -54,6 +54,26 @@ func WriteSchemas(schemas []EntSchema, c config.Config) {
 			Path: s.Path,
 			Buffer: strings.Join([]string{
 				s.Schema,
+				s.Mixins,
+				s.Fields,
+				s.Edges,
+				s.Annotations,
+			}, "\n\n"),
+		}, c)
+		//}
+	}
+}
+
+func WriteMixins(mixins []EntMixin, c config.Config) {
+	cwd, _ := os.Getwd()
+
+	for _, s := range mixins {
+		_, _ = os.Stat(path.Join(cwd, s.Path))
+		//if os.IsNotExist(err) {
+		WriteFile(types.File{
+			Path: s.Path,
+			Buffer: strings.Join([]string{
+				s.Schema,
 				s.Fields,
 				s.Edges,
 				s.Annotations,

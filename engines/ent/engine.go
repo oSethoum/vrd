@@ -19,29 +19,59 @@ import (
 var Assets embed.FS
 
 func Engine(state types.State, config config.Config) {
-	nodes := Parse(state, config)
-	utils.WriteJSON("output.json", nodes)
+	st := Parse(state, config)
+	utils.WriteJSON("output.json", st)
+	//return
 	files := []types.File{}
 
 	entSchemas := []EntSchema{}
-	for _, node := range nodes {
-		entSchemas = append(entSchemas, EntSchema{
+	for _, node := range st.Nodes {
+
+		entSchema := EntSchema{
 			Path:        fmt.Sprintf("ent/schema/%s.go", kace.Snake(node.Name)),
 			Schema:      parseTemplate("schema.go.tmpl", node),
-			Fields:      parseTemplate("fields.go.tmpl", node),
-			Edges:       parseTemplate("edges.go.tmpl", node),
 			Annotations: parseTemplate("annotations.go.tmpl", node),
-		})
+		}
+
+		if len(node.Fields) > 0 {
+			entSchema.Fields = parseTemplate("fields.go.tmpl", node)
+		}
+
+		if len(node.Edges) > 0 {
+			entSchema.Edges = parseTemplate("edges.go.tmpl", node)
+		}
+
+		if len(node.Mixins) > 0 {
+			entSchema.Mixins = parseTemplate("mixins.go.tmpl", node)
+		}
+
+		entSchemas = append(entSchemas, entSchema)
 	}
 
-	// utils.WriteJSON("schemas.json", entSchemas)
+	entMixins := []EntMixin{}
+	for _, mixin := range st.Mixins {
+		entMixin := EntMixin{
+			Path:   fmt.Sprintf("ent/schema/%s.go", kace.Snake(mixin.Name)),
+			Schema: parseTemplate("mixin.schema.go.tmpl", mixin),
+		}
+
+		if len(mixin.Fields) > 0 {
+			entMixin.Fields = parseTemplate("fields.go.tmpl", mixin)
+		}
+
+		if len(mixin.Edges) > 0 {
+			entMixin.Edges = parseTemplate("edges.go.tmpl", mixin)
+		}
+
+		entMixins = append(entMixins, entMixin)
+	}
 
 	if config.Ent.Graphql {
 		files = append(files,
 			types.File{
 				Path: "graph/resolvers/schema.resolvers.go",
 				Buffer: parseTemplate("schema.resolvers.go.tmpl", SchemaData{
-					Nodes:   nodes,
+					Nodes:   st.Nodes,
 					Package: config.Ent.Package,
 				}),
 			},
@@ -69,7 +99,7 @@ func Engine(state types.State, config config.Config) {
 
 		gqlResolvers := []GQlResolver{}
 
-		for _, node := range nodes {
+		for _, node := range st.Nodes {
 			gqlResolvers = append(gqlResolvers, GQlResolver{
 				Path:    fmt.Sprintf("graph/resolvers/%s.resolvers.go", kace.Snake(node.Name)),
 				Head:    parseTemplate("entity.resolver.go.tmpl", config.Ent.Package),
@@ -113,6 +143,7 @@ func Engine(state types.State, config config.Config) {
 
 	}
 	WriteSchemas(entSchemas, config)
+	WriteMixins(entMixins, config)
 	WriteFiles(files, config)
 }
 

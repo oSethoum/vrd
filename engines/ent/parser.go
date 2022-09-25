@@ -1,6 +1,7 @@
 package ent
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -11,141 +12,380 @@ import (
 	"github.com/gertd/go-pluralize"
 )
 
-// TODO: support many to many relationshipt
-// TODO: support mixins
+func Parse(state types.State, config config.Config) State {
 
-func Parse(state types.State, config config.Config) []Node {
+	st := State{
+		Nodes:  []Node{},
+		Mixins: make(map[string]Mixin),
+	}
 
-	nodes := make([]Node, 0)
+	for _, table := range state.TableState.Tables {
+		if sClean(table.Name) == "" {
+			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
+		}
+		if strings.Contains(table.Name, "Mixin") {
+			mixin := parseTableMixin(&state, &table, &config)
+			st.Mixins[mixin.Alias] = *mixin
+		}
+	}
 
 	for _, table := range state.TableState.Tables {
 		if sClean(table.Name) == "" {
 			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
 		}
 
-		node := Node{
-			ID:      table.Id,
-			Name:    table.Name,
-			Comment: sClean(table.Comment),
-			Imports: []string{
-				"\t\"entgo.io/ent\"",
-				"\t\"entgo.io/ent/dialect/entsql\"",
-				"\t\"entgo.io/ent/schema\"",
-			},
+		if !strings.Contains(table.Name, "Mixin") {
+			node := parseTableNode(&state, st.Mixins, &table, &config)
+			if node != nil {
+				st.Nodes = append(st.Nodes, *node)
+			}
+		}
+	}
+	return st
+}
+
+func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Table, config *config.Config) *Node {
+
+	node := Node{
+		ID:      table.Id,
+		Name:    table.Name,
+		Comment: sClean(table.Comment),
+		Imports: []string{
+			"\t\"entgo.io/ent\"",
+			"\t\"entgo.io/ent/dialect/entsql\"",
+			"\t\"entgo.io/ent/schema\"",
+		},
+	}
+
+	var isM2M bool
+
+	coptions := strings.Split(sClean(table.Comment), "|")
+	for _, cop := range coptions {
+		if strings.ToLower(cop) == "m2m" {
+			// handle the case of m2m
+			isM2M = true
+			if len(table.Columns) == 2 {
+				return nil
+			}
+			continue
+		}
+		cops := strings.Split(cop, "=")
+		switch cops[0] {
+		case "nm":
+			node.Name = cops[1]
+		case "mxs":
+			mxs := strings.Split(strings.ReplaceAll(strings.ReplaceAll(cops[1], "(", ""), ")", ""), ",")
+			for _, mx := range mxs {
+				node.Mixins = append(node.Mixins, mixins[mx].Name)
+			}
+		}
+	}
+
+	if config.Ent.Graphql {
+		node.Imports = append(node.Imports, "\t\"entgo.io/contrib/entgql\"")
+	}
+
+	node.Fields = make([]Field, 0)
+
+	for _, column := range table.Columns {
+
+		columnErrors(column, table.Name)
+
+		if isM2M && column.Ui.Fk {
+			field := parseColumn(&column, config)
+			node.Fields = append(node.Fields, field)
 		}
 
-		if config.Ent.Graphql {
-			node.Imports = append(node.Imports, "\t\"entgo.io/contrib/entgql\"")
+		if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
+			field := parseColumn(&column, config)
+
+			if strings.Contains(strings.ToLower(field.Type), "time") && !in("\t\"time\"", node.Imports) {
+				node.Imports = append(node.Imports, "\t\"time\"")
+			}
+			node.Fields = append(node.Fields, field)
 		}
 
-		node.Fields = make([]Field, 0)
+	}
 
-		for _, column := range table.Columns {
-			columnErrors(column, table.Name)
+	node.Edges = make([]Edge, 0)
 
-			if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
-				field := parseColumn(column, config)
+	for _, relationship := range state.RelationshipState.Relationships {
+		edge := Edge{
+			ID: relationship.Id,
+		}
+		options := []string{}
 
-				if strings.Contains(strings.ToLower(field.Type), "time") && !In("\t\"time\"", node.Imports) {
-					node.Imports = append(node.Imports, "\t\"time\"")
+		if relationship.Start.TableId == table.Id {
+			endColumn := findColumn(state, relationship.End.TableId, relationship.End.ColumnIds[0])
+			endTable := findTable(state, relationship.End.TableId)
+			edge.Direction = "To"
+
+			if strings.Contains(strings.ToLower(endTable.Comment), "m2m") {
+				if sClean(endTable.Comment) == "" {
+					log.Fatalf("Parsing: Error M2M Table %s, Column %s cannot be empty", endTable.Name, endColumn.Name)
 				}
-
-				node.Fields = append(node.Fields, field)
-			}
-		}
-
-		node.Edges = make([]Edge, 0)
-
-		for _, relationship := range state.RelationshipState.Relationships {
-			edge := Edge{
-				ID: relationship.Id,
-			}
-			options := []string{}
-
-			if relationship.Start.TableId == table.Id {
-				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
-				edge.Direction = "To"
-				edge.Node = findTable(&state, relationship.End.TableId).Name
-
-				if len(strings.Split(endColumn.Comment, "|")) < 2 {
-					switch relationship.RelationshipType {
-					case "ZeroN", "OneN":
-						edge.Name = kace.Camel(pluralize.NewClient().Plural(edge.Node))
-					case "ZeroOne", "OneOnly":
-						edge.Name = kace.Camel(edge.Node)
-					}
-				} else {
-					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
+				cms := strings.Split(sClean(endColumn.Comment), ",")
+				edge.Direction = cms[0]
+				edge.Node = cms[2]
+				edge.Name = cms[1]
+				tb := strings.Split(strings.Split(endTable.Comment, "|")[1], "=")[1]
+				if tb == "" {
+					tb = multiPlural(endTable.Name)
 				}
-				node.Edges = append(node.Edges, edge)
+				edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+				if edge.Direction == "From" {
+					edge.Options = append(edge.Options, fmt.Sprintf("Ref(\"%s\")", cms[3]))
+				}
+			} else {
+				edge.Node = endTable.Name
 			}
 
-			if relationship.End.TableId == table.Id {
-				endColumn := findColumn(&state, relationship.End.TableId, relationship.End.ColumnIds[0])
-				edge.Direction = "From"
-				edge.Node = findTable(&state, relationship.Start.TableId).Name
-
-				if len(strings.Split(endColumn.Comment, "|")) < 2 {
-					etName := findTable(&state, relationship.End.TableId).Name
+			if len(strings.Split(endColumn.Comment, "|")) < 2 {
+				switch relationship.RelationshipType {
+				case "ZeroN", "OneN":
+					edge.Name = kace.Camel(pluralize.NewClient().Plural(edge.Node))
+				case "ZeroOne", "OneOnly":
 					edge.Name = kace.Camel(edge.Node)
-
-					switch relationship.RelationshipType {
-					case "OneN", "ZeroN":
-						edge.Reference = kace.Camel(pluralize.NewClient().Plural(etName))
-					case "OneOnly", "ZeroOne":
-						edge.Reference = kace.Camel(etName)
-					}
-				} else {
-					edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
-					edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
 				}
+			} else {
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
+			}
 
+			node.Edges = append(node.Edges, edge)
+		}
+
+		if relationship.End.TableId == table.Id {
+			endColumn := findColumn(state, relationship.End.TableId, relationship.End.ColumnIds[0])
+			edge.Direction = "From"
+			edge.Node = findTable(state, relationship.Start.TableId).Name
+
+			if len(strings.Split(endColumn.Comment, "|")) < 2 {
+				etName := findTable(state, relationship.End.TableId).Name
+				edge.Name = kace.Camel(edge.Node)
+
+				switch relationship.RelationshipType {
+				case "OneN", "ZeroN":
+					edge.Reference = kace.Camel(pluralize.NewClient().Plural(etName))
+				case "OneOnly", "ZeroOne":
+					edge.Reference = kace.Camel(etName)
+				}
+			} else {
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
+				edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
+			}
+
+			if isM2M {
+				options = append(options, "Unique()", "Required()", fmt.Sprintf("Field(\"%s\")", endColumn.Name))
+
+			} else {
 				switch relationship.RelationshipType {
 				case "ZeroOne", "ZeroN":
 					options = append(options, "Unique()")
 				case "OneOnly", "OneN":
 					options = append(options, "Unique()", "Required()")
 				}
-
-				options = append(options, "Ref(\""+edge.Reference+"\")")
-
-				edge.Options = options
-				node.Edges = append(node.Edges, edge)
 			}
 
+			if !isM2M {
+				options = append(options, "Ref(\""+edge.Reference+"\")")
+			}
+
+			edge.Options = options
+			node.Edges = append(node.Edges, edge)
 		}
 
-		if len(node.Edges) > 0 {
-			node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/edge\"")
-		}
-
-		if len(node.Fields) > 0 {
-			node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/field\"")
-		}
-
-		tableName := sClean(table.Comment)
-		if tableName == "" {
-			tableName = table.Snakes(multiPlural(table.Name))
-		}
-
-		node.Annotations = []string{
-			"\t\tentsql.Annotation{Table: \"" + tableName + "\"}",
-		}
-
-		if config.Ent.Graphql {
-			node.Annotations = append(node.Annotations, []string{
-				"\t\tentgql.QueryField(\"" + kace.Camel(tableName) + "\")",
-				"\t\tentgql.RelayConnection()",
-				"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
-			}...)
-		}
-
-		nodes = append(nodes, node)
 	}
-	return nodes
+
+	if len(node.Edges) > 0 {
+		node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/edge\"")
+	}
+
+	if len(node.Fields) > 0 {
+		node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/field\"")
+	}
+
+	cms := strings.Split(sClean(table.Comment), "|")
+	tableName := ""
+	for _, cm := range cms {
+		if strings.Contains(cm, "nm=") {
+			tableName = strings.Split(cm, "=")[1]
+		}
+	}
+	if tableName == "" {
+		tableName = table.Snakes(multiPlural(table.Name))
+	}
+
+	node.Annotations = []string{
+		"\t\tentsql.Annotation{Table: \"" + tableName + "\"}",
+	}
+
+	if config.Ent.Graphql {
+		node.Annotations = append(node.Annotations, []string{
+			"\t\tentgql.QueryField(\"" + kace.Camel(tableName) + "\")",
+			"\t\tentgql.RelayConnection()",
+			"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
+		}...)
+	}
+
+	return &node
 }
 
-// Helpers
+func parseTableMixin(state *types.State, table *types.Table, config *config.Config) *Mixin {
+	mixin := Mixin{
+		ID:      table.Id,
+		Name:    table.Name,
+		Comment: sClean(table.Comment),
+		Imports: []string{
+			"\t\"entgo.io/ent\"",
+			"\t\"entgo.io/ent/schema/mixin\"",
+		},
+	}
+
+	if config.Ent.Graphql {
+		mixin.Imports = append(mixin.Imports, "\t\"entgo.io/contrib/entgql\"")
+	}
+
+	var isM2M bool
+
+	coptions := strings.Split(sClean(table.Comment), "|")
+	for _, cop := range coptions {
+		if strings.ToLower(cop) == "m2m" {
+			// handle the case of m2m
+			isM2M = true
+			if len(table.Columns) == 2 {
+				return nil
+			}
+			continue
+		}
+		cops := strings.Split(cop, "=")
+		switch cops[0] {
+		case "nx":
+			mixin.Alias = cops[1]
+		}
+	}
+
+	mixin.Fields = make([]Field, 0)
+
+	for _, column := range table.Columns {
+
+		columnErrors(column, table.Name)
+
+		if isM2M && column.Ui.Fk {
+			field := parseColumn(&column, config)
+			mixin.Fields = append(mixin.Fields, field)
+		}
+
+		if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
+			field := parseColumn(&column, config)
+
+			if strings.Contains(strings.ToLower(field.Type), "time") && !in("\t\"time\"", mixin.Imports) {
+				mixin.Imports = append(mixin.Imports, "\t\"time\"")
+			}
+			mixin.Fields = append(mixin.Fields, field)
+		}
+
+	}
+
+	mixin.Edges = make([]Edge, 0)
+
+	for _, relationship := range state.RelationshipState.Relationships {
+		edge := Edge{
+			ID: relationship.Id,
+		}
+		options := []string{}
+
+		if relationship.Start.TableId == table.Id {
+			endColumn := findColumn(state, relationship.End.TableId, relationship.End.ColumnIds[0])
+			endTable := findTable(state, relationship.End.TableId)
+			edge.Direction = "To"
+
+			if strings.Contains(strings.ToLower(endTable.Comment), "m2m") {
+				if sClean(endTable.Comment) == "" {
+					log.Fatalf("Parsing: Error M2M Table %s, Column %s cannot be empty", endTable.Name, endColumn.Name)
+				}
+				cms := strings.Split(sClean(endColumn.Comment), ",")
+				edge.Direction = cms[0]
+				edge.Node = cms[2]
+				edge.Name = cms[1]
+				tb := strings.Split(strings.Split(endTable.Comment, "|")[1], "=")[1]
+				if tb == "" {
+					tb = multiPlural(endTable.Name)
+				}
+				edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+				if edge.Direction == "From" {
+					edge.Options = append(edge.Options, fmt.Sprintf("Ref(\"%s\")", cms[3]))
+				}
+			} else {
+				edge.Node = endTable.Name
+			}
+
+			if len(strings.Split(endColumn.Comment, "|")) < 2 {
+				switch relationship.RelationshipType {
+				case "ZeroN", "OneN":
+					edge.Name = kace.Camel(pluralize.NewClient().Plural(edge.Node))
+				case "ZeroOne", "OneOnly":
+					edge.Name = kace.Camel(edge.Node)
+				}
+			} else {
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[1])
+			}
+
+			mixin.Edges = append(mixin.Edges, edge)
+		}
+
+		if relationship.End.TableId == table.Id {
+			endColumn := findColumn(state, relationship.End.TableId, relationship.End.ColumnIds[0])
+			edge.Direction = "From"
+			edge.Node = findTable(state, relationship.Start.TableId).Name
+
+			if len(strings.Split(endColumn.Comment, "|")) < 2 {
+				etName := findTable(state, relationship.End.TableId).Name
+				edge.Name = kace.Camel(edge.Node)
+
+				switch relationship.RelationshipType {
+				case "OneN", "ZeroN":
+					edge.Reference = kace.Camel(pluralize.NewClient().Plural(etName))
+				case "OneOnly", "ZeroOne":
+					edge.Reference = kace.Camel(etName)
+				}
+			} else {
+				edge.Name = sClean(strings.Split(endColumn.Comment, "|")[0])
+				edge.Reference = sClean(strings.Split(endColumn.Comment, "|")[1])
+			}
+
+			if isM2M {
+				options = append(options, "Unique()", "Required()", fmt.Sprintf("Field(\"%s\")", endColumn.Name))
+
+			} else {
+				switch relationship.RelationshipType {
+				case "ZeroOne", "ZeroN":
+					options = append(options, "Unique()")
+				case "OneOnly", "OneN":
+					options = append(options, "Unique()", "Required()")
+				}
+			}
+
+			if !isM2M {
+				options = append(options, "Ref(\""+edge.Reference+"\")")
+			}
+
+			edge.Options = options
+			mixin.Edges = append(mixin.Edges, edge)
+		}
+
+	}
+
+	if len(mixin.Edges) > 0 {
+		mixin.Imports = append(mixin.Imports, "\t\"entgo.io/ent/schema/edge\"")
+	}
+
+	if len(mixin.Fields) > 0 {
+		mixin.Imports = append(mixin.Imports, "\t\"entgo.io/ent/schema/field\"")
+	}
+
+	return &mixin
+}
+
 func findColumn(state *types.State, tableId string, columnId string) *types.Column {
 	for i, table := range state.TableState.Tables {
 		for j, column := range table.Columns {
@@ -166,7 +406,7 @@ func findTable(state *types.State, tableId string) *types.Table {
 	return nil
 }
 
-func parseColumn(column types.Column, config config.Config) Field {
+func parseColumn(column *types.Column, config *config.Config) Field {
 	datatype := parseType(column.DataType)
 	options := []string{}
 	annotations := []string{}
@@ -301,7 +541,7 @@ func parseColumn(column types.Column, config config.Config) Field {
 			}...)
 		}
 	} else {
-		if config.Ent.Graphql && In(datatype, ComparableTypes) {
+		if config.Ent.Graphql && in(datatype, ComparableTypes) {
 			annotations = append(annotations, []string{
 				"entgql.OrderField(\"" + strings.ToUpper(column.Name) + "\")",
 			}...)
@@ -362,7 +602,7 @@ func parseDefault(datatype string, defaultVal string) string {
 }
 
 // Helper
-func In[T int | float32 | string](value T, list []T) bool {
+func in[T int | float32 | string](value T, list []T) bool {
 	for _, v := range list {
 		if v == value {
 			return true

@@ -4,12 +4,30 @@ import (
 	"vrd/types"
 )
 
+type State struct {
+	Nodes  []Node           `json:"nodes"`
+	Mixins map[string]Mixin `json:"mixins"`
+}
+
+type Mixin struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Alias       string   `json:"alias"`
+	Comment     string   `json:"comment"`
+	Fields      []Field  `json:"fields"`
+	Edges       []Edge   `json:"edges"`
+	Imports     []string `json:"imports"`
+	Annotations []string `json:"annotations"`
+	types.Helper
+}
+
 type Node struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	Comment     string   `json:"comment"`
 	Fields      []Field  `json:"fields"`
 	Edges       []Edge   `json:"edges"`
+	Mixins      []string `json:"mixins"`
 	Imports     []string `json:"imports"`
 	Annotations []string `json:"annotations"`
 	types.Helper
@@ -20,7 +38,6 @@ type Edge struct {
 	Node        string   `json:"node"`
 	Name        string   `json:"name"`
 	Reference   string   `json:"reference"`
-	Through     string   `json:"through"`
 	Options     []string `json:"options"`
 	Direction   string   `json:"direction"` // To | From
 	Annotations []string `json:"annotations"`
@@ -42,6 +59,16 @@ type Field struct {
 type EntSchema struct {
 	Path        string `json:"path"`
 	Schema      string `json:"schema"`
+	Mixins      string `json:"mixins"`
+	Fields      string `json:"fields"`
+	Edges       string `json:"edges"`
+	Annotations string `json:"annotations"`
+}
+
+type EntMixin struct {
+	Path        string `json:"path"`
+	Schema      string `json:"schema"`
+	Mixins      string `json:"mixins"`
 	Fields      string `json:"fields"`
 	Edges       string `json:"edges"`
 	Annotations string `json:"annotations"`
