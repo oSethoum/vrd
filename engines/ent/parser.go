@@ -161,7 +161,11 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 
 		if relationship.End.TableId == table.Id {
 			endColumn := findColumn(state, relationship.End.TableId, relationship.End.ColumnIds[0])
-			edge.Direction = "From"
+			if isM2M {
+				edge.Direction = "To"
+			} else {
+				edge.Direction = "From"
+			}
 			edge.Node = findTable(state, relationship.Start.TableId).Name
 
 			if len(strings.Split(endColumn.Comment, "|")) < 2 {
