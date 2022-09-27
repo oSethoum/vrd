@@ -20,7 +20,7 @@ var Assets embed.FS
 
 func Engine(state types.State, config config.Config) {
 	st := Parse(state, config)
-	utils.WriteJSON("output.json", st)
+	utils.WriteJSON("vrd/output.json", st)
 
 	files := []types.File{}
 

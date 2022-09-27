@@ -9,11 +9,11 @@ import (
 
 func Init() Config {
 	var config Config
-	_, err := os.Stat("vrd.config.json")
+	_, err := os.Stat("vrd/vrd.config.json")
 
 	if err != nil {
 		config = Config{
-			Input:  "db.vuerd.json",
+			Input:  "vrd/db.vuerd.json",
 			Output: "./",
 			Ent: &Ent{
 				Package: "app",
@@ -23,7 +23,7 @@ func Init() Config {
 				Privacy: true,
 			},
 		}
-		utils.WriteJSON("vrd.config.json", config)
+		utils.WriteJSON("vrd/vrd.config.json", config)
 		println("vrd initialized successfully")
 		os.Exit(0)
 	} else {
