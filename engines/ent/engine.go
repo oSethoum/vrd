@@ -80,7 +80,7 @@ func Engine(state types.State, config config.Config) {
 				Buffer: parseTemplate("generate.go.tmpl", nil),
 			},
 			types.File{
-				Path:   "graph/scheams/scalars.graphqls",
+				Path:   "graph/schemas/scalars.graphqls",
 				Buffer: parseTemplate("scalars.go.tmpl", nil),
 			},
 			types.File{
@@ -115,7 +115,7 @@ func Engine(state types.State, config config.Config) {
 			})
 			files = append(files, types.File{
 				Path:   fmt.Sprintf("graph/schemas/%s.graphqls", kace.Snake(node.Name)),
-				Buffer: parseTemplate("entity.graphqls.go.tmpl", node.Name),
+				Buffer: parseTemplate("entity.graphqls.go.tmpl", node),
 			})
 		}
 		files = append(files,
@@ -141,6 +141,10 @@ func Engine(state types.State, config config.Config) {
 				types.File{
 					Path:   "auth/auth.go",
 					Buffer: parseTemplate("auth.go.tmpl", config.Ent.Package),
+				},
+				types.File{
+					Path:   "auth/types.go",
+					Buffer: parseTemplate("auth.types.go.tmpl", nil),
 				},
 			)
 		}

@@ -1,9 +1,22 @@
 extend type Query {
-  {{.}}(id: ID!): {{.}}
+  {{.Name}}(id: ID!): {{.Name}}!
 }
 
 extend type Mutation {
-  create{{.}}(input: Create{{.}}Input!): {{.}}!
-  update{{.}}(id: ID!, input: Update{{.}}Input!): {{.}}!
-  delete{{.}}(id: ID!): {{.}}!
+  create{{.Name}}(input: Create{{.Name}}Input!): {{.Name}}!
+  update{{.Name}}(id: ID!, input: Update{{.Name}}Input!): {{.Name}}!
+  delete{{.Name}}(id: ID!): {{.Name}}!
+}
+
+extend type Subscription {
+  {{.Camel .TableName}}(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: {{.Name}}Order
+    where: {{.Name}}WhereInput
+  ): {{.Name}}Connection!
+
+  {{.Name}}(id: ID!): {{.Name}}!
 }

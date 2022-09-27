@@ -28,7 +28,7 @@ func Init() Config {
 		println("vrd initialized successfully")
 		os.Exit(0)
 	} else {
-		utils.ReadJSON("vrd.config.json", &config)
+		utils.ReadJSON("vrd/vrd.config.json", &config)
 		checkConfig(config)
 	}
 

@@ -12,21 +12,6 @@ import (
   "github.com/labstack/echo/v4/middleware"
 )
 
-type Respose struct {
-  Errors interface{} `json:"errors"`
-  Data   interface{} `json:"data"`
-}
-
-type LoginDTO struct {
-  Username string `json:"username"`
-  Password string `json:"password"`
-}
-
-type Claims struct {
-  UserID   int    `json:"userId"`
-  Username string `json:"username"`
-  jwt.StandardClaims
-}
 
 func Login(c echo.Context) error {
   ctx := context.Background()
