@@ -209,18 +209,17 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/field\"")
 	}
 
-	tableName := ""
 	if node.TableName == "" {
-		tableName = node.Name
+		node.TableName = kace.Snake(node.MultiPlural(node.Name))
 	}
 
 	node.Annotations = []string{
-		"\t\tentsql.Annotation{Table: \"" + tableName + "\"}",
+		"\t\tentsql.Annotation{Table: \"" + node.TableName + "\"}",
 	}
 
 	if config.Ent.Graphql {
 		node.Annotations = append(node.Annotations, []string{
-			"\t\tentgql.QueryField(\"" + kace.Camel(tableName) + "\")",
+			"\t\tentgql.QueryField(\"" + kace.Camel(node.TableName) + "\")",
 			"\t\tentgql.RelayConnection()",
 			"\t\tentgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
 		}...)
