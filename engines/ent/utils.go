@@ -33,7 +33,7 @@ func WriteResolvers(resolvers []GQlResolver, c config.Config) {
 		WriteFile(types.File{
 			Path: r.Path,
 			Buffer: strings.Join([]string{
-				"package resolvers",
+				r.Head,
 				r.Query,
 				r.Create,
 				r.Update,
