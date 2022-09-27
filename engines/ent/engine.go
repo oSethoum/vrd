@@ -80,6 +80,10 @@ func Engine(state types.State, config config.Config) {
 				Buffer: parseTemplate("generate.go.tmpl", nil),
 			},
 			types.File{
+				Path:   "graph/scheams/scalars.graphqls",
+				Buffer: parseTemplate("scalars.go.tmpl", nil),
+			},
+			types.File{
 				Path:   "ent/entc.go",
 				Buffer: parseTemplate("entc.go.tmpl", nil),
 			},

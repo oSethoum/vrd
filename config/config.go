@@ -23,6 +23,7 @@ func Init() Config {
 				Privacy: true,
 			},
 		}
+		utils.WriteJSON("vrd/db.vuerd.json", nil)
 		utils.WriteJSON("vrd/vrd.config.json", config)
 		println("vrd initialized successfully")
 		os.Exit(0)

@@ -32,38 +32,10 @@ func PlaygroundWsHandler() echo.HandlerFunc {
 	}
 }
 
-func GraphqlHandlers(client *ent.Client) echo.HandlerFunc {
-
-	h := handler.NewDefaultServer(resolvers.ExecutableSchema())
-	h.Use(entgql.Transactioner{TxOpener: client})
-	h.AddTransport(transport.POST{})
-	h.AddTransport(&transport.Websocket{
-		KeepAlivePingInterval: 10 * time.Second,
-		Upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		},
-	})
-	h.Use(extension.Introspection{})
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
-}
-
 func GraphqlHandler(client *ent.Client) echo.HandlerFunc {
 	h := handler.NewDefaultServer(resolvers.ExecutableSchema())
 	h.Use(entgql.Transactioner{TxOpener: client})
-
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
-}
-
-func GraphqlWsHandler(client *ent.Client) echo.HandlerFunc {
-	h := handler.New(resolvers.ExecutableSchema())
+	h.Use(extension.Introspection{})
 	h.AddTransport(transport.POST{})
 	h.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -73,7 +45,7 @@ func GraphqlWsHandler(client *ent.Client) echo.HandlerFunc {
 			},
 		},
 	})
-	h.Use(extension.Introspection{})
+
 	return func(c echo.Context) error {
 		h.ServeHTTP(c.Response(), c.Request())
 		return nil
