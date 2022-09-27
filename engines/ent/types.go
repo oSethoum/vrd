@@ -12,6 +12,7 @@ type State struct {
 type Mixin struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
+	TableName   string   `json:"tableName"`
 	Alias       string   `json:"alias"`
 	Comment     string   `json:"comment"`
 	Fields      []Field  `json:"fields"`
@@ -24,6 +25,7 @@ type Mixin struct {
 type Node struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
+	TableName   string   `json:"tableName"`
 	Comment     string   `json:"comment"`
 	Fields      []Field  `json:"fields"`
 	Edges       []Edge   `json:"edges"`

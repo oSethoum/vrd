@@ -72,7 +72,8 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		cops := strings.Split(cop, "=")
 		switch cops[0] {
 		case "nm":
-			node.Name = cops[1]
+			node.TableName = cops[1]
+
 		case "mxs":
 			mxs := strings.Split(strings.ReplaceAll(strings.ReplaceAll(cops[1], "(", ""), ")", ""), ",")
 			for _, mx := range mxs {
@@ -132,7 +133,11 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 				if tb == "" {
 					tb = multiPlural(endTable.Name)
 				}
-				edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+
+				if len(endTable.Columns) > 2 {
+					edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+				}
+
 				if edge.Direction == "From" {
 					edge.Options = append(edge.Options, fmt.Sprintf("Ref(\"%s\")", cms[3]))
 				}
@@ -204,15 +209,9 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		node.Imports = append(node.Imports, "\t\"entgo.io/ent/schema/field\"")
 	}
 
-	cms := strings.Split(sClean(table.Comment), "|")
 	tableName := ""
-	for _, cm := range cms {
-		if strings.Contains(cm, "nm=") {
-			tableName = strings.Split(cm, "=")[1]
-		}
-	}
-	if tableName == "" {
-		tableName = table.Snakes(multiPlural(table.Name))
+	if node.TableName == "" {
+		tableName = node.Name
 	}
 
 	node.Annotations = []string{
@@ -311,7 +310,11 @@ func parseTableMixin(state *types.State, table *types.Table, config *config.Conf
 				if tb == "" {
 					tb = multiPlural(endTable.Name)
 				}
-				edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+
+				if len(endTable.Columns) > 2 {
+					edge.Options = append(edge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", tb, endTable.Name))
+				}
+
 				if edge.Direction == "From" {
 					edge.Options = append(edge.Options, fmt.Sprintf("Ref(\"%s\")", cms[3]))
 				}
