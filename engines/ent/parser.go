@@ -439,7 +439,7 @@ func parseColumn(column *types.Column, config *config.Config) Field {
 		if strings.Contains(cop, "=") {
 			arr := strings.Split(cop, "=")
 
-			if arr[0] == "-upd" {
+			if arr[0] == "upd" {
 				if datatype == "String" || datatype == "Bytes" || datatype == "Enum" {
 					options = append(options, "UpdateDefault(\""+arr[1]+"\")")
 				} else {
