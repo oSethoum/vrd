@@ -23,6 +23,9 @@ func main() {
 	}
 	opts := []entc.Option{
 		entc.Extensions(ex),
+		{{- if .Config.Ent.Privacy}}
+		entc.FeatureNames("privacy"),
+		{{end}}
 	}
 
 	if err := entc.Generate("./schema", &gen.Config{}, opts...); err != nil {

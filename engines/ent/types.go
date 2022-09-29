@@ -77,6 +77,7 @@ type EntSchema struct {
 	Fields      string `json:"fields"`
 	Edges       string `json:"edges"`
 	Annotations string `json:"annotations"`
+	Policy      string `json:"policy"`
 }
 
 type EntMixin struct {

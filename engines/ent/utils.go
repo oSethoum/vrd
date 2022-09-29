@@ -59,6 +59,7 @@ func WriteSchemas(schemas []EntSchema, c config.Config) {
 				s.Fields,
 				s.Edges,
 				s.Annotations,
+				s.Policy,
 			}, "\n\n"),
 		}, c)
 		//}

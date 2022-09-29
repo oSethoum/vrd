@@ -45,6 +45,10 @@ func Engine(state types.State, config config.Config) {
 			entSchema.Mixins = parseTemplate("mixins.go.tmpl", node)
 		}
 
+		if config.Ent.Privacy {
+			entSchema.Policy = parseTemplate("policy.go.tmpl", node)
+		}
+
 		entSchemas = append(entSchemas, entSchema)
 	}
 
@@ -90,7 +94,7 @@ func Engine(state types.State, config config.Config) {
 			},
 			types.File{
 				Path:   "ent/entc.go",
-				Buffer: parseTemplate("entc.go.tmpl", nil),
+				Buffer: parseTemplate("entc.go.tmpl", SchemaData{Config: config}),
 			},
 			types.File{
 				Path:   "gqlgen.yml",
@@ -105,6 +109,13 @@ func Engine(state types.State, config config.Config) {
 				Buffer: parseTemplate("handlers.go.tmpl", config.Ent.Package),
 			},
 		)
+
+		if config.Ent.Privacy {
+			files = append(files, types.File{
+				Path:   "auth/privacy.go",
+				Buffer: parseTemplate("auth.privacy.go.tmpl", config.Ent.Package),
+			})
+		}
 
 		gqlResolvers := []GQlResolver{}
 
@@ -131,7 +142,7 @@ func Engine(state types.State, config config.Config) {
 			},
 			types.File{
 				Path:   "server.go",
-				Buffer: parseTemplate("server.go.tmpl", config.Ent.Package),
+				Buffer: parseTemplate("server.go.tmpl", SchemaData{Config: config}),
 			},
 		)
 

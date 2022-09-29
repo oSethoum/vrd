@@ -57,6 +57,11 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		},
 	}
 
+	if config.Ent.Privacy {
+		node.Imports = append(node.Imports, "\t\""+config.Ent.Package+"/ent/privacy\"")
+		node.Imports = append(node.Imports, "\t\""+config.Ent.Package+"/auth\"")
+	}
+
 	var isM2M bool
 
 	coptions := strings.Split(sClean(table.Comment), "|")
