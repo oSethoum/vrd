@@ -1,14 +1,15 @@
 package ent
 
 import (
+	"vrd/config"
 	"vrd/types"
 )
 
 // Types
 type SchemaData struct {
 	types.Helper
-	Nodes   []Node
-	Package string
+	Nodes  []Node
+	Config config.Config
 }
 type QueriesData struct {
 	types.Helper

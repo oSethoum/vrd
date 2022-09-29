@@ -69,19 +69,16 @@ func Engine(state types.State, config config.Config) {
 	if config.Ent.Graphql {
 		files = append(files,
 			types.File{
-				Path: "graph/resolvers/schema.resolvers.go",
-				Buffer: parseTemplate("schema.resolvers.go.tmpl", SchemaData{
-					Nodes:   st.Nodes,
-					Package: config.Ent.Package,
-				}),
+				Path:   "graph/resolvers/schema.resolvers.go",
+				Buffer: parseTemplate("schema.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Config: config}),
 			},
 			types.File{
 				Path:   "graph/resolvers/types.go",
-				Buffer: parseTemplate("types.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Package: config.Ent.Package}),
+				Buffer: parseTemplate("types.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Config: config}),
 			},
 			types.File{
 				Path:   "graph/resolvers/notifiers.go",
-				Buffer: parseTemplate("notifiers.resolvers.go.tmpl", SchemaData{Package: config.Ent.Package, Nodes: st.Nodes}),
+				Buffer: parseTemplate("notifiers.resolvers.go.tmpl", SchemaData{Config: config, Nodes: st.Nodes}),
 			},
 			types.File{
 				Path:   "ent/generate.go",
@@ -101,7 +98,7 @@ func Engine(state types.State, config config.Config) {
 			},
 			types.File{
 				Path:   "graph/resolvers/resolver.go",
-				Buffer: parseTemplate("resolver.go.tmpl", SchemaData{Package: config.Ent.Package, Nodes: st.Nodes}),
+				Buffer: parseTemplate("resolver.go.tmpl", SchemaData{Config: config, Nodes: st.Nodes}),
 			},
 			types.File{
 				Path:   "handlers/handlers.go",

@@ -1,8 +1,8 @@
 package resolvers
 
 import (
-   "{{.Package}}/graph/models"
-   "{{.Package}}/ent"
+   "{{.Config.Ent.Package}}/graph/models"
+   "{{.Config.Ent.Package}}/ent"
 )
 
 {{range .Nodes}}
@@ -10,6 +10,7 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 	r.{{.Pascals .Name}}ListennersMutext.Lock()
 	for key := range r.{{.Pascals .Name}}Listenners {
 		if r.{{.Pascals .Name}}Listenners[key].Event == event {
+		   println("Client: ", key, "\nEvent: ", event)
 			query := r.{{.Pascals .Name}}Listenners[key].Query
 			if query == nil {
 				query = &models.{{.Pascals .Name}}QueryInput{}
@@ -17,7 +18,7 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 
 			entities, err := r.Client.{{.Name}}.Query().Paginate(r.{{.Pascals .Name}}Listenners[key].Context, query.After, query.First, query.Before, query.Last, ent.With{{.Name}}Filter(query.Where.Filter), ent.With{{.Name}}Order(query.OrderBy))
 
-			if err != nil {
+			if err == nil {
 				r.{{.Pascals .Name}}Listenners[key].Channel <- entities
 			}
 
