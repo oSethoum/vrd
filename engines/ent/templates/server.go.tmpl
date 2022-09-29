@@ -1,11 +1,13 @@
 package main
 
 import (
-	"{{.}}/db"
-	"{{.}}/routes"
+	"{{.Config.Ent.Package}}/db"
+	"{{.Config.Ent.Package}}/routes"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	
+	{{if .Config.Ent.Privacy}}
+	_ "{{.Config.Ent.Package}}/ent/runtime"
+	{{end}}
 )
 
 func main() {
