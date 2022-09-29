@@ -1,4 +1,11 @@
-// Update{{.}} is the resolver for the update{{.}} field.
-func (r *mutationResolver) Update{{.}}(ctx context.Context, id int, input ent.Update{{.}}Input) (*ent.{{.}}, error) {
-{{"\t"}}return ent.FromContext(ctx).{{.}}.UpdateOneID(id).SetInput(input).Save(ctx)
+// Update{{.Name}} is the resolver for the update{{.Name}} field.
+func (r *mutationResolver) Update{{.Name}}(ctx context.Context, id int, input ent.Update{{.Name}}Input) (*ent.{{.Name}}, error) {
+   entity, err := ent.FromContext(ctx).{{.Name}}.UpdateOneID(id).SetInput(input).Save(ctx)
+   
+   if err == nil {
+      go Notify{{.Name}}Listenners(r, models.EventUpdate, entity)
+      go Notify{{.Pascals .Name}}Listenners(r, models.EventUpdate)
+   }
+
+   return entity, err
 }

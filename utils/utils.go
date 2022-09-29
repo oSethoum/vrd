@@ -26,6 +26,10 @@ func WriteJSON(filePath string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(path.Join(cwd, filePath), buffer, 0666)
+
+	outPath := path.Join(cwd, filePath)
+	os.MkdirAll(path.Dir(outPath), 0666)
+
+	err = os.WriteFile(outPath, buffer, 0666)
 	return err
 }

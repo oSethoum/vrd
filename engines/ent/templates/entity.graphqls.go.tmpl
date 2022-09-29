@@ -8,15 +8,16 @@ extend type Mutation {
   delete{{.Name}}(id: ID!): {{.Name}}!
 }
 
-extend type Subscription {
-  {{.Camel .TableName}}(
-    after: Cursor
-    first: Int
-    before: Cursor
-    last: Int
-    orderBy: {{.Name}}Order
-    where: {{.Name}}WhereInput
-  ): {{.Name}}Connection!
+input {{.Pascals .Name}}QueryInput {
+  after: Cursor
+  first: Int
+  before: Cursor
+  last: Int
+  orderBy: {{.Name}}Order
+  where: {{.Name}}WhereInput
+}
 
-  {{.Name}}(id: ID!): {{.Name}}!
+extend type Subscription {
+  {{.Camels .Name}}(event: Event!, query: {{.Pascals .Name}}QueryInput): {{.Name}}Connection!
+  {{.Name}}(event: Event!, id: ID!): {{.Name}}!
 }

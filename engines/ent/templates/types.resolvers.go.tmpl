@@ -1,0 +1,23 @@
+package resolvers
+
+import (
+	"{{.Package}}/ent"
+	"{{.Package}}/graph/models"
+	"context"
+)
+
+{{range .Nodes}}
+type {{.Name}}Listenner struct {
+	Context context.Context
+	ID      int
+	Event   models.Event
+	Channel chan *ent.{{.Name}}
+}
+
+type {{.Pascals .Name}}Listenner struct {
+	Context context.Context
+	Channel chan *ent.{{.Name}}Connection
+	Event   models.Event
+	Query   *models.{{.Pascals .Name}}QueryInput
+}
+{{end}}

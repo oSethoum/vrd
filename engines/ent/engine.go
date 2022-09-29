@@ -76,12 +76,20 @@ func Engine(state types.State, config config.Config) {
 				}),
 			},
 			types.File{
+				Path:   "graph/resolvers/types.go",
+				Buffer: parseTemplate("types.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Package: config.Ent.Package}),
+			},
+			types.File{
+				Path:   "graph/resolvers/notifiers.go",
+				Buffer: parseTemplate("notifiers.resolvers.go.tmpl", SchemaData{Package: config.Ent.Package, Nodes: st.Nodes}),
+			},
+			types.File{
 				Path:   "ent/generate.go",
 				Buffer: parseTemplate("generate.go.tmpl", nil),
 			},
 			types.File{
-				Path:   "graph/schemas/scalars.graphqls",
-				Buffer: parseTemplate("scalars.go.tmpl", nil),
+				Path:   "graph/schemas/generated.graphqls",
+				Buffer: parseTemplate("generated.go.tmpl", nil),
 			},
 			types.File{
 				Path:   "ent/entc.go",
@@ -93,7 +101,7 @@ func Engine(state types.State, config config.Config) {
 			},
 			types.File{
 				Path:   "graph/resolvers/resolver.go",
-				Buffer: parseTemplate("resolver.go.tmpl", config.Ent.Package),
+				Buffer: parseTemplate("resolver.go.tmpl", SchemaData{Package: config.Ent.Package, Nodes: st.Nodes}),
 			},
 			types.File{
 				Path:   "handlers/handlers.go",
@@ -105,13 +113,14 @@ func Engine(state types.State, config config.Config) {
 
 		for _, node := range st.Nodes {
 			gqlResolvers = append(gqlResolvers, GQlResolver{
-				Path:    fmt.Sprintf("graph/resolvers/%s.resolvers.go", kace.Snake(node.Name)),
-				Head:    parseTemplate("entity.resolver.go.tmpl", config.Ent.Package),
-				Query:   parseTemplate("query.resolvers.go.tmpl", node.Name),
-				Queries: parseTemplate("queries.resolvers.go.tmpl", QueriesData{Name: node.Name}),
-				Create:  parseTemplate("create.resolvers.go.tmpl", node.Name),
-				Update:  parseTemplate("update.resolvers.go.tmpl", node.Name),
-				Delete:  parseTemplate("delete.resolvers.go.tmpl", node.Name),
+				Path:          fmt.Sprintf("graph/resolvers/%s.resolvers.go", kace.Snake(node.Name)),
+				Head:          parseTemplate("head.resolver.go.tmpl", config.Ent.Package),
+				Query:         parseTemplate("query.resolvers.go.tmpl", node),
+				Queries:       parseTemplate("queries.resolvers.go.tmpl", node),
+				Create:        parseTemplate("create.resolvers.go.tmpl", node),
+				Update:        parseTemplate("update.resolvers.go.tmpl", node),
+				Delete:        parseTemplate("delete.resolvers.go.tmpl", node),
+				Subscriptions: parseTemplate("subscriptions.resolvers.go.tmpl", node),
 			})
 			files = append(files, types.File{
 				Path:   fmt.Sprintf("graph/schemas/%s.graphqls", kace.Snake(node.Name)),
@@ -155,17 +164,6 @@ func Engine(state types.State, config config.Config) {
 	WriteFiles(files, config)
 }
 
-// Types
-type SchemaData struct {
-	types.Helper
-	Nodes   []Node
-	Package string
-}
-type QueriesData struct {
-	types.Helper
-	Name string
-}
-
 // Helpers
 func parseTemplate(fileName string, v interface{}) string {
 	f, err := Assets.ReadFile("templates/" + fileName)
@@ -187,5 +185,7 @@ func parseTemplate(fileName string, v interface{}) string {
 		log.Fatalf("Engine: error executing template %s", fileName)
 	}
 
-	return strings.ReplaceAll(out.String(), "&#34;", "\"")
+	str := strings.ReplaceAll(out.String(), "&#34;", "\"")
+	str = strings.ReplaceAll(str, "&lt;", "<")
+	return str
 }

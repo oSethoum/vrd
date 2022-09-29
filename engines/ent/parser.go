@@ -149,6 +149,7 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 				switch relationship.RelationshipType {
 				case "ZeroN", "OneN":
 					edge.Name = kace.Camel(pluralize.NewClient().Plural(edge.Node))
+					edge.Annotations = append(edge.Annotations, "entgql.RelayConnection()")
 				case "ZeroOne", "OneOnly":
 					edge.Name = kace.Camel(edge.Node)
 				}

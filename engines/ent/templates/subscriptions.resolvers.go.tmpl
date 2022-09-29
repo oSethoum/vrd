@@ -1,0 +1,68 @@
+// {{.Pascals .Name}} is the resolver for the {{.Camels .Name}} field.
+func (r *subscriptionResolver) {{.Pascals .Name}}(ctx context.Context, event models.Event, query *models.{{.Pascals .Name}}QueryInput) (<-chan *ent.{{.Name}}Connection, error) {
+	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	channel := make(chan *ent.{{.Name}}Connection, 1)
+	println("----------------------------------------------------")
+	println("Socket Client: ", socketClient)
+	println("Entity: {{.Pascals .Name}}")
+	println("Event: ", event)
+	println("----------------------------------------------------")
+
+	r.{{.Pascals .Name}}ListennersMutext.Lock()
+	r.{{.Pascals .Name}}Listenners[socketClient] = {{.Pascals .Name}}Listenner{
+		Context: ctx,
+		Channel: channel,
+		Event:   event,
+		Query:   query,
+	}
+	r.{{.Pascals .Name}}ListennersMutext.Unlock()
+
+	go func() {
+		<-ctx.Done()
+		println("----------------------------------------------------")
+		println("Socket Client: ", socketClient)
+		println("Disconnected")
+		println("----------------------------------------------------")
+		r.{{.Pascals .Name}}ListennersMutext.Lock()
+		delete(r.{{.Pascals .Name}}Listenners, socketClient)
+		r.{{.Pascals .Name}}ListennersMutext.Unlock()
+	}()
+
+	return channel, nil
+}
+
+// {{.Name}} is the resolver for the {{.Name}} field.
+func (r *subscriptionResolver) {{.Name}}(ctx context.Context, event models.Event, id int) (<-chan *ent.{{.Name}}, error) {
+	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	channel := make(chan *ent.{{.Name}}, 1)
+	println("----------------------------------------------------")
+	println("Socket Client: ", socketClient)
+	println("Entity: {{.Pascals .Name}}")
+	println("Event: ", event)
+	println("Disconnected")
+	println("----------------------------------------------------")
+
+	r.{{.Name}}ListennersMutext.Lock()
+	r.{{.Name}}Listenners[socketClient] = {{.Name}}Listenner{
+		Context: ctx,
+		ID:      id,
+		Channel: channel,
+		Event:   event,
+	}
+	r.{{.Name}}ListennersMutext.Unlock()
+
+	// remove listenner when the socket is disconnected
+	go func() {
+		<-ctx.Done()
+		println("----------------------------------------------------")
+		println("Socket Client: ", socketClient)
+		println("Disconnected")
+		println("----------------------------------------------------")
+
+		r.{{.Name}}ListennersMutext.Lock()
+		delete(r.{{.Name}}Listenners, socketClient)
+		r.{{.Name}}ListennersMutext.Unlock()
+	}()
+
+	return channel, nil
+}

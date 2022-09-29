@@ -1,11 +1,13 @@
 package resolvers
 
 import (
-	"{{.}}/db" 
-	"{{.}}/ent"
-	"{{.}}/graph/generated"
+	"{{.Package}}/db" 
+	"{{.Package}}/ent"
+	"{{.Package}}/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql"
+	
+	"sync"
 )
 
 // This file will not be regenerated automatically.
@@ -14,6 +16,13 @@ import (
 
 type Resolver struct {
 	Client *ent.Client
+
+	{{range .Nodes}}
+	{{.Name}}Listenners        		  map[string]{{.Name}}Listenner
+	{{.Name}}ListennersMutext 			  sync.Mutex
+	{{.Pascals .Name}}Listenners       map[string]{{.Pascals .Name}}Listenner
+	{{.Pascals .Name}}ListennersMutext sync.Mutex
+	{{end}}
 }
 
 var schema *graphql.ExecutableSchema
@@ -23,6 +32,13 @@ func ExecutableSchema() graphql.ExecutableSchema {
 		schema = new(graphql.ExecutableSchema)
 		*schema = generated.NewExecutableSchema(generated.Config{Resolvers: &Resolver{
 			Client: db.DB,
+
+			{{range .Nodes}}
+			{{.Name}}Listenners:        			make(map[string]{{.Name}}Listenner),
+			{{.Name}}ListennersMutext:  			sync.Mutex{},
+			{{.Pascals .Name}}Listenners:       make(map[string]{{.Pascals .Name}}Listenner),
+			{{.Pascals .Name}}ListennersMutext: sync.Mutex{},
+			{{end}}
 		}})
 	}
 

@@ -1,4 +1,11 @@
-// Create{{.}} is the resolver for the create{{.}} field.
-func (r *mutationResolver) Create{{.}}(ctx context.Context, input ent.Create{{.}}Input) (*ent.{{.}}, error) {
-	return ent.FromContext(ctx).{{.}}.Create().SetInput(input).Save(ctx)
+// Create{{.Name}} is the resolver for the create{{.Name}} field.
+func (r *mutationResolver) Create{{.Name}}(ctx context.Context, input ent.Create{{.Name}}Input) (*ent.{{.Name}}, error) {
+	entity, err := ent.FromContext(ctx).{{.Name}}.Create().SetInput(input).Save(ctx)
+
+	if err == nil {
+      go Notify{{.Name}}Listenners(r, models.EventCreate, entity)
+      go Notify{{.Pascals .Name}}Listenners(r, models.EventCreate)
+   }
+
+	return entity, err
 }

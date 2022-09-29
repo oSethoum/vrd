@@ -4,6 +4,17 @@ import (
 	"vrd/types"
 )
 
+// Types
+type SchemaData struct {
+	types.Helper
+	Nodes   []Node
+	Package string
+}
+type QueriesData struct {
+	types.Helper
+	Name string
+}
+
 type State struct {
 	Nodes  []Node           `json:"nodes"`
 	Mixins map[string]Mixin `json:"mixins"`
@@ -77,13 +88,14 @@ type EntMixin struct {
 }
 
 type GQlResolver struct {
-	Path    string `json:"path"`
-	Head    string `json:"Head"`
-	Queries string `json:"queries"`
-	Query   string `json:"query"`
-	Create  string `json:"create"`
-	Update  string `json:"update"`
-	Delete  string `json:"delete"`
+	Path          string `json:"path"`
+	Head          string `json:"Head"`
+	Queries       string `json:"queries"`
+	Query         string `json:"query"`
+	Create        string `json:"create"`
+	Update        string `json:"update"`
+	Delete        string `json:"delete"`
+	Subscriptions string `json:"subscriptions"`
 }
 
 var EntTypes = map[string]string{

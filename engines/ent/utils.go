@@ -38,6 +38,7 @@ func WriteResolvers(resolvers []GQlResolver, c config.Config) {
 				r.Create,
 				r.Update,
 				r.Delete,
+				r.Subscriptions,
 			}, "\n\n"),
 		}, c)
 		//}

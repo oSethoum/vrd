@@ -1,5 +1,11 @@
-// Delete{{.}} is the resolver for the delete{{.}} field.
-func (r *mutationResolver) Delete{{.}}(ctx context.Context, id int) (*ent.{{.}}, error) {
-	entity, _ := r.Client.{{.}}.Get(ctx, id)
-	return entity, ent.FromContext(ctx).{{.}}.DeleteOneID(id).Exec(ctx)
+// Delete{{.Name}} is the resolver for the delete{{.Name}} field.
+func (r *mutationResolver) Delete{{.Name}}(ctx context.Context, id int) (*ent.{{.Name}}, error) {
+	entity, err := r.Client.{{.Name}}.Get(ctx, id)
+
+	if err == nil {
+      go Notify{{.Name}}Listenners(r, models.EventDelete, entity)
+      go Notify{{.Pascals .Name}}Listenners(r, models.EventDelete)
+   }
+
+	return entity, ent.FromContext(ctx).{{.Name}}.DeleteOneID(id).Exec(ctx)
 }

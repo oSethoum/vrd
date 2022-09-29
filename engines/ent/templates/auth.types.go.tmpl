@@ -7,6 +7,10 @@ type Respose struct {
   Data   interface{} `json:"data"`
 }
 
+type ContextKey struct {
+  Key string
+}
+
 type LoginDTO struct {
   Username string `json:"username"`
   Password string `json:"password"`
