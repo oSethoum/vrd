@@ -1,0 +1,121 @@
+package resolvers
+
+// This file will be automatically regenerated based on the schema, any resolver implementations
+// will be copied through when generating and any unknown code will be moved to the end.
+
+import (
+	"context"
+	"{{.Config.Ent.Package}}/auth"
+	"{{.Config.Ent.Package}}/ent"
+	"{{.Config.Ent.Package}}/graph/models"
+)
+
+// {{.Node.Name}} is the resolver for the {{.Node.Name}} field.
+func (r *queryResolver) {{.Node.Name}}(ctx context.Context, id int) (*ent.{{.Node.Name}}, error) {
+   return r.Client.{{.Node.Name}}.Get(ctx, id)
+}
+
+// Create{{.Node.Name}} is the resolver for the create{{.Node.Name}} field.
+func (r *mutationResolver) Create{{.Node.Name}}(ctx context.Context, input ent.Create{{.Node.Name}}Input) (*ent.{{.Node.Name}}, error) {
+	entity, err := ent.FromContext(ctx).{{.Node.Name}}.Create().SetInput(input).Save(ctx)
+
+	if err == nil {
+      go Notify{{.Node.Name}}Listenners(r, models.EventCreate, entity)
+      go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventCreate)
+   }
+
+	return entity, err
+}
+
+// Update{{.Node.Name}} is the resolver for the update{{.Node.Name}} field.
+func (r *mutationResolver) Update{{.Node.Name}}(ctx context.Context, id int, input ent.Update{{.Node.Name}}Input) (*ent.{{.Node.Name}}, error) {
+   entity, err := ent.FromContext(ctx).{{.Node.Name}}.UpdateOneID(id).SetInput(input).Save(ctx)
+   
+   if err == nil {
+      go Notify{{.Node.Name}}Listenners(r, models.EventUpdate, entity)
+      go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventUpdate)
+   }
+
+   return entity, err
+}
+
+// Delete{{.Node.Name}} is the resolver for the delete{{.Node.Name}} field.
+func (r *mutationResolver) Delete{{.Node.Name}}(ctx context.Context, id int) (*ent.{{.Node.Name}}, error) {
+	entity, err := r.Client.{{.Node.Name}}.Get(ctx, id)
+
+	if err == nil {
+      go Notify{{.Node.Name}}Listenners(r, models.EventDelete, entity)
+      go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventDelete)
+   }
+
+	return entity, ent.FromContext(ctx).{{.Node.Name}}.DeleteOneID(id).Exec(ctx)
+}
+
+// {{.Pascals .Node.Name}} is the resolver for the {{.Camels .Node.Name}} field.
+func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, event models.Event, query *models.{{.Pascals .Node.Name}}QueryInput) (<-chan *ent.{{.Node.Name}}Connection, error) {
+	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	channel := make(chan *ent.{{.Node.Name}}Connection, 1)
+	println("----------------------------------------------------")
+	println("Socket Client: ", socketClient)
+	println("Entity: {{.Pascals .Node.Name}}")
+	println("Event: ", event)
+	println("----------------------------------------------------")
+
+	r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
+	r.{{.Pascals .Node.Name}}Listenners[socketClient] = {{.Pascals .Node.Name}}Listenner{
+		Context: ctx,
+		Channel: channel,
+		Event:   event,
+		Query:   query,
+	}
+	r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
+
+	go func() {
+		<-ctx.Done()
+		println("----------------------------------------------------")
+		println("Socket Client: ", socketClient)
+		println("Disconnected")
+		println("----------------------------------------------------")
+		r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
+		delete(r.{{.Pascals .Node.Name}}Listenners, socketClient)
+		r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
+	}()
+
+	return channel, nil
+}
+
+// {{.Node.Name}} is the resolver for the {{.Node.Name}} field.
+func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, event models.Event, id int) (<-chan *ent.{{.Node.Name}}, error) {
+	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	channel := make(chan *ent.{{.Node.Name}}, 1)
+	println("----------------------------------------------------")
+	println("Socket Client: ", socketClient)
+	println("Entity: {{.Pascals .Node.Name}}")
+	println("Event: ", event)
+	println("Disconnected")
+	println("----------------------------------------------------")
+
+	r.{{.Node.Name}}ListennersMutext.Lock()
+	r.{{.Node.Name}}Listenners[socketClient] = {{.Node.Name}}Listenner{
+		Context: ctx,
+		ID:      id,
+		Channel: channel,
+		Event:   event,
+	}
+	r.{{.Node.Name}}ListennersMutext.Unlock()
+
+	// remove listenner when the socket is disconnected
+	go func() {
+		<-ctx.Done()
+		println("----------------------------------------------------")
+		println("Socket Client: ", socketClient)
+		println("Disconnected")
+		println("----------------------------------------------------")
+
+		r.{{.Node.Name}}ListennersMutext.Lock()
+		delete(r.{{.Node.Name}}Listenners, socketClient)
+		r.{{.Node.Name}}ListennersMutext.Unlock()
+	}()
+
+	return channel, nil
+}

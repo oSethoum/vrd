@@ -1,0 +1,29 @@
+package schema
+
+import (
+{{- range .Mixin.Imports}}
+{{.}}
+{{- end}}
+)
+
+type {{.Mixin.Name}} struct {
+    mixin.Schema
+}
+
+// Fields of the {{.Mixin.Name}}.
+func ({{.Mixin.Name}}) Fields() []ent.Field {
+{{"\t"}}return []ent.Field{
+{{- range .Mixin.Fields}}
+{{"\t\t"}}field.{{.Type}}("{{.Name}}"){{.Join .Options "." "."}},
+{{- end}}
+{{"\t"}}}
+}
+
+// Edges of the {{.Mixin.Name}}.
+func ({{.Mixin.Name}}) Edges() []ent.Edge {
+{{"\t"}}return []ent.Edge{
+{{- range .Mixin.Edges}}
+{{"\t\t"}}edge.{{.Direction}}("{{.Name}}",{{.Node}}.Type){{.Join .Options "." "."}}{{.Join .Annotations ".Annotations(" ", " ")"}},
+{{- end}}
+{{"\t"}}}
+}

@@ -1,7 +1,0 @@
-// Policy defines the privacy policy of the {{.Name}}.
-func ({{.Name}}) Policy() ent.Policy {
-	return privacy.Policy{
-		Mutation: privacy.MutationPolicy{auth.MutationPrivacy("{{.Name}}")},
-		Query:    privacy.QueryPolicy{auth.QueryPrivacy("{{.Name}}")},
-	}
-}

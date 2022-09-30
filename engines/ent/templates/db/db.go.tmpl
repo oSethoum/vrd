@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"{{.}}/ent"
+	"{{.Config.Ent.Package}}/ent"
 
 	"entgo.io/ent/dialect/sql/schema"
 	_ "github.com/mattn/go-sqlite3"

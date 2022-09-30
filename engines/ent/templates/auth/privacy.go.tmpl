@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"{{.}}/ent/privacy"
+	"{{.Config.Ent.Package}}/ent/privacy"
 )
 
 func QueryPrivacy(node string) privacy.QueryMutationRule {

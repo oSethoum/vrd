@@ -1,18 +1,12 @@
 package ent
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
-	"html/template"
-	"log"
-	"strings"
 
 	"vrd/config"
 	"vrd/types"
 	"vrd/utils"
-
-	"github.com/codemodus/kace"
 )
 
 //go:embed templates
@@ -23,177 +17,125 @@ func Engine(state types.State, config config.Config) {
 	utils.WriteJSON("vrd/output.json", st)
 
 	files := []types.File{}
-
-	entSchemas := []EntSchema{}
-	for _, node := range st.Nodes {
-
-		entSchema := EntSchema{
-			Path:        fmt.Sprintf("ent/schema/%s.go", kace.Snake(node.Name)),
-			Schema:      parseTemplate("schema.go.tmpl", node),
-			Annotations: parseTemplate("annotations.go.tmpl", node),
-		}
-
-		if len(node.Fields) > 0 {
-			entSchema.Fields = parseTemplate("fields.go.tmpl", node)
-		}
-
-		if len(node.Edges) > 0 {
-			entSchema.Edges = parseTemplate("edges.go.tmpl", node)
-		}
-
-		if len(node.Mixins) > 0 {
-			entSchema.Mixins = parseTemplate("mixins.go.tmpl", node)
-		}
-
-		if config.Ent.Privacy {
-			entSchema.Policy = parseTemplate("policy.go.tmpl", node)
-		}
-
-		entSchemas = append(entSchemas, entSchema)
+	data := TemplateData{
+		Config: config,
+		Nodes:  st.Nodes,
+		Mixins: st.Mixins,
 	}
 
-	entMixins := []EntMixin{}
-	for _, mixin := range st.Mixins {
-		entMixin := EntMixin{
-			Path:   fmt.Sprintf("ent/schema/%s.go", kace.Snake(mixin.Name)),
-			Schema: parseTemplate("mixin.schema.go.tmpl", mixin),
-		}
-
-		if len(mixin.Fields) > 0 {
-			entMixin.Fields = parseTemplate("fields.go.tmpl", mixin)
-		}
-
-		if len(mixin.Edges) > 0 {
-			entMixin.Edges = parseTemplate("edges.go.tmpl", mixin)
-		}
-
-		entMixins = append(entMixins, entMixin)
-	}
-
-	if config.Ent.Graphql {
+	if config.Ent.Auth {
 		files = append(files,
 			types.File{
-				Path:   "graph/resolvers/schema.resolvers.go",
-				Buffer: parseTemplate("schema.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Config: config}),
+				Path:   "auth/login.go",
+				Buffer: ParseTemplate("auth/login.go.tmpl", data),
 			},
 			types.File{
-				Path:   "graph/resolvers/types.go",
-				Buffer: parseTemplate("types.resolvers.go.tmpl", SchemaData{Nodes: st.Nodes, Config: config}),
+				Path:   "auth/middlewares.go",
+				Buffer: ParseTemplate("auth/middlewares.go.tmpl", data),
 			},
 			types.File{
-				Path:   "graph/resolvers/notifiers.go",
-				Buffer: parseTemplate("notifiers.resolvers.go.tmpl", SchemaData{Config: config, Nodes: st.Nodes}),
-			},
-			types.File{
-				Path:   "ent/generate.go",
-				Buffer: parseTemplate("generate.go.tmpl", nil),
-			},
-			types.File{
-				Path:   "graph/schemas/generated.graphqls",
-				Buffer: parseTemplate("generated.go.tmpl", nil),
-			},
-			types.File{
-				Path:   "ent/entc.go",
-				Buffer: parseTemplate("entc.go.tmpl", SchemaData{Config: config}),
-			},
-			types.File{
-				Path:   "gqlgen.yml",
-				Buffer: parseTemplate("gqlgen.go.tmpl", config.Ent.Package),
-			},
-			types.File{
-				Path:   "graph/resolvers/resolver.go",
-				Buffer: parseTemplate("resolver.go.tmpl", SchemaData{Config: config, Nodes: st.Nodes}),
-			},
-			types.File{
-				Path:   "handlers/handlers.go",
-				Buffer: parseTemplate("handlers.go.tmpl", config.Ent.Package),
+				Path:   "auth/types.go",
+				Buffer: ParseTemplate("auth/types.go.tmpl", data),
 			},
 		)
 
 		if config.Ent.Privacy {
 			files = append(files, types.File{
 				Path:   "auth/privacy.go",
-				Buffer: parseTemplate("auth.privacy.go.tmpl", config.Ent.Package),
+				Buffer: ParseTemplate("auth/privacy.go.tmpl", data),
 			})
 		}
+	}
 
-		gqlResolvers := []GQlResolver{}
+	files = append(files,
+		types.File{
+			Path:   "db/db.go",
+			Buffer: ParseTemplate("db/db.go.tmpl", data),
+		},
+		types.File{
+			Path:   "server.go",
+			Buffer: ParseTemplate("server.go.tmpl", data),
+		},
+	)
 
-		for _, node := range st.Nodes {
-			gqlResolvers = append(gqlResolvers, GQlResolver{
-				Path:          fmt.Sprintf("graph/resolvers/%s.resolvers.go", kace.Snake(node.Name)),
-				Head:          parseTemplate("head.resolver.go.tmpl", config.Ent.Package),
-				Query:         parseTemplate("query.resolvers.go.tmpl", node),
-				Queries:       parseTemplate("queries.resolvers.go.tmpl", node),
-				Create:        parseTemplate("create.resolvers.go.tmpl", node),
-				Update:        parseTemplate("update.resolvers.go.tmpl", node),
-				Delete:        parseTemplate("delete.resolvers.go.tmpl", node),
-				Subscriptions: parseTemplate("subscriptions.resolvers.go.tmpl", node),
-			})
-			files = append(files, types.File{
-				Path:   fmt.Sprintf("graph/schemas/%s.graphqls", kace.Snake(node.Name)),
-				Buffer: parseTemplate("entity.graphqls.go.tmpl", node),
-			})
-		}
+	if config.Ent.Graphql {
 		files = append(files,
 			types.File{
-				Path:   "db/db.go",
-				Buffer: parseTemplate("db.go.tmpl", config.Ent.Package),
+				Path:   "ent/entc.go",
+				Buffer: ParseTemplate("ent/entc.go.tmpl", data),
 			},
 			types.File{
-				Path:   "server.go",
-				Buffer: parseTemplate("server.go.tmpl", SchemaData{Config: config}),
+				Path:   "ent/generate.go",
+				Buffer: ParseTemplate("ent/generate.go.tmpl", data),
+			},
+			types.File{
+				Path:   "graph/resolvers/helpers.go",
+				Buffer: ParseTemplate("graph/resolvers/helpers.go.tmpl", data),
+			},
+			types.File{
+				Path:   "graph/resolvers/types.go",
+				Buffer: ParseTemplate("graph/resolvers/types.go.tmpl", data),
+			},
+			types.File{
+				Path:   "graph/resolvers/schema.resolvers.go",
+				Buffer: ParseTemplate("graph/resolvers/schema.resolvers.go.tmpl", data),
+			},
+			types.File{
+				Path:   "graph/resolvers/resolver.go",
+				Buffer: ParseTemplate("graph/resolvers/resolver.go.tmpl", data),
+			},
+			types.File{
+				Path:   "graph/schemas/types.graphqls",
+				Buffer: ParseTemplate("graph/schemas/types.graphqls.go.tmpl", data),
+			},
+			types.File{
+				Path:   "gqlgen.yml",
+				Buffer: ParseTemplate("gqlgen.go.tmpl", data),
+			},
+			types.File{
+				Path:   "routes/routes.go",
+				Buffer: ParseTemplate("routes/routes.go.tmpl", data),
+			},
+			types.File{
+				Path:   "handlers/handlers.go",
+				Buffer: ParseTemplate("handlers/handlers.go.tmpl", data),
 			},
 		)
 
-		// utils.WriteJSON("resolvers.json", gqlResolvers)
-		WriteResolvers(gqlResolvers, config)
-
-		if config.Ent.Echo {
+		for _, node := range st.Nodes {
+			data.Node = node
 			files = append(files,
 				types.File{
-					Path:   "routes/routes.go",
-					Buffer: parseTemplate("routes.go.tmpl", config.Ent.Package),
+					Path:   fmt.Sprintf("graph/resolvers/%s.resolvers.go", node.Camel(node.Name)),
+					Buffer: ParseTemplate("graph/resolvers/node.resolvers.go.tmpl", data),
 				},
 				types.File{
-					Path:   "auth/auth.go",
-					Buffer: parseTemplate("auth.go.tmpl", config.Ent.Package),
-				},
-				types.File{
-					Path:   "auth/types.go",
-					Buffer: parseTemplate("auth.types.go.tmpl", nil),
+					Path:   fmt.Sprintf("graph/schemas/%s.graphqls", node.Camel(node.Name)),
+					Buffer: ParseTemplate("graph/schemas/node.graphqls.go.tmpl", data),
 				},
 			)
 		}
-
 	}
-	WriteSchemas(entSchemas, config)
-	WriteMixins(entMixins, config)
+
+	for _, node := range st.Nodes {
+		data.Node = node
+		files = append(files,
+			types.File{
+				Path:   fmt.Sprintf("ent/schema/%s.go", node.Camel(node.Name)),
+				Buffer: ParseTemplate("ent/schema/node.go.tmpl", data),
+			},
+		)
+	}
+
+	for _, mixin := range st.Mixins {
+		data.Mixin = mixin
+		files = append(files,
+			types.File{
+				Path:   fmt.Sprintf("ent/schema/%s.go", mixin.Camel(mixin.Name)),
+				Buffer: ParseTemplate("ent/schema/mixin.go.tmpl", data),
+			},
+		)
+	}
+
 	WriteFiles(files, config)
-}
-
-// Helpers
-func parseTemplate(fileName string, v interface{}) string {
-	f, err := Assets.ReadFile("templates/" + fileName)
-	if err != nil {
-		log.Fatalf("Engine: error reading file %s", fileName)
-	}
-
-	t, err := template.New(fileName).Parse(string(f))
-
-	if err != nil {
-		log.Fatalf("Engine: error parsing template %s", fileName)
-	}
-
-	out := bytes.Buffer{}
-
-	err = t.Execute(&out, v)
-
-	if err != nil {
-		log.Fatalf("Engine: error executing template %s", fileName)
-	}
-
-	str := strings.ReplaceAll(out.String(), "&#34;", "\"")
-	str = strings.ReplaceAll(str, "&lt;", "<")
-	return str
 }

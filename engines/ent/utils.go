@@ -1,6 +1,8 @@
 package ent
 
 import (
+	"bytes"
+	"html/template"
 	"log"
 	"os"
 	"path"
@@ -24,63 +26,28 @@ func WriteFiles(files []types.File, c config.Config) {
 	}
 }
 
-func WriteResolvers(resolvers []GQlResolver, c config.Config) {
-	cwd, _ := os.Getwd()
-
-	for _, r := range resolvers {
-		_, _ = os.Stat(path.Join(cwd, r.Path))
-		//if os.IsNotExist(err) {
-		WriteFile(types.File{
-			Path: r.Path,
-			Buffer: strings.Join([]string{
-				r.Head,
-				r.Query,
-				r.Create,
-				r.Update,
-				r.Delete,
-				r.Subscriptions,
-			}, "\n\n"),
-		}, c)
-		//}
+func ParseTemplate(fileName string, v interface{}) string {
+	f, err := Assets.ReadFile("templates/" + fileName)
+	if err != nil {
+		log.Fatalf("Engine: error reading file %s", fileName)
 	}
-}
 
-func WriteSchemas(schemas []EntSchema, c config.Config) {
-	cwd, _ := os.Getwd()
+	t, err := template.New(fileName).Parse(string(f))
 
-	for _, s := range schemas {
-		_, _ = os.Stat(path.Join(cwd, s.Path))
-		//if os.IsNotExist(err) {
-		WriteFile(types.File{
-			Path: s.Path,
-			Buffer: strings.Join([]string{
-				s.Schema,
-				s.Mixins,
-				s.Fields,
-				s.Edges,
-				s.Annotations,
-				s.Policy,
-			}, "\n\n"),
-		}, c)
-		//}
+	if err != nil {
+		log.Fatalf("Engine: error parsing template %s", fileName)
 	}
-}
 
-func WriteMixins(mixins []EntMixin, c config.Config) {
-	cwd, _ := os.Getwd()
+	out := bytes.Buffer{}
 
-	for _, s := range mixins {
-		_, _ = os.Stat(path.Join(cwd, s.Path))
-		//if os.IsNotExist(err) {
-		WriteFile(types.File{
-			Path: s.Path,
-			Buffer: strings.Join([]string{
-				s.Schema,
-				s.Fields,
-				s.Edges,
-				s.Annotations,
-			}, "\n\n"),
-		}, c)
-		//}
+	err = t.Execute(&out, v)
+
+	if err != nil {
+		log.Fatalf("Engine: error executing template %s", fileName)
 	}
+
+	// correcting the characters
+	str := strings.ReplaceAll(out.String(), "&#34;", "\"")
+	str = strings.ReplaceAll(str, "&lt;", "<")
+	return str
 }

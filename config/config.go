@@ -18,7 +18,6 @@ func Init() Config {
 			Ent: &Ent{
 				Package: "app",
 				Graphql: true,
-				Echo:    true,
 				Auth:    true,
 				Privacy: true,
 			},

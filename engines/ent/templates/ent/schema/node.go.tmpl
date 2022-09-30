@@ -1,0 +1,55 @@
+package schema
+
+import (
+{{- range .Node.Imports}}
+{{.}}
+{{- end}}
+)
+
+type {{.Node.Name}} struct {
+    ent.Schema
+}
+
+// Mixins of the {{.Node.Name}}.
+func ({{.Node.Name}}) Mixin() []ent.Mixin {
+{{"\t"}}return []ent.Mixin{
+{{range $key, $value := .Node.Mixins -}}
+{{"\t\t"}}{{$value}}{},
+{{end}}
+{{"\t"}}}
+}
+
+// Fields of the {{.Node.Name}}.
+func ({{.Node.Name}}) Fields() []ent.Field {
+{{"\t"}}return []ent.Field{
+{{- range .Node.Fields}}
+{{"\t\t"}}field.{{.Type}}("{{.Name}}"){{.Join .Options "." "."}},
+{{- end}}
+{{"\t"}}}
+}
+
+// Edges of the {{.Node.Name}}.
+func ({{.Node.Name}}) Edges() []ent.Edge {
+{{"\t"}}return []ent.Edge{
+{{- range .Node.Edges}}
+{{"\t\t"}}edge.{{.Direction}}("{{.Name}}",{{.Node}}.Type){{.Join .Options "." "."}}{{.Join .Annotations ".Annotations(" ", " ")"}},
+{{- end}}
+{{"\t"}}}
+}
+
+// Annotations of the .{{.Node.Name}}.
+func ({{.Node.Name}}) Annotations() []schema.Annotation {
+{{"\t"}}return []schema.Annotation{
+{{- range .Node.Annotations}}
+{{.}},
+{{- end}}
+{{"\t"}}}
+}
+
+// Policy defines the privacy policy of the {{.Node.Name}}.
+func ({{.Node.Name}}) Policy() ent.Policy {
+	return privacy.Policy{
+		Mutation: privacy.MutationPolicy{auth.MutationPrivacy("{{.Node.Name}}")},
+		Query:    privacy.QueryPolicy{auth.QueryPrivacy("{{.Node.Name}}")},
+	}
+}

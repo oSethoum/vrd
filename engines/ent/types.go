@@ -6,14 +6,13 @@ import (
 )
 
 // Types
-type SchemaData struct {
+type TemplateData struct {
 	types.Helper
 	Nodes  []Node
+	Mixins map[string]Mixin
+	Node   Node
+	Mixin  Mixin
 	Config config.Config
-}
-type QueriesData struct {
-	types.Helper
-	Name string
 }
 
 type State struct {

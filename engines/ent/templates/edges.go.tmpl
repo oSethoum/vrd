@@ -1,8 +1,0 @@
-// Edges of the {{.Name}}.
-func ({{.Name}}) Edges() []ent.Edge {
-{{"\t"}}return []ent.Edge{
-{{- range .Edges}}
-{{"\t\t"}}edge.{{.Direction}}("{{.Name}}",{{.Node}}.Type){{.Join .Options "." "."}}{{.Join .Annotations ".Annotations(" ", " ")"}},
-{{- end}}
-{{"\t"}}}
-}

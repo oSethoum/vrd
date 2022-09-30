@@ -1,8 +1,0 @@
-// Mixins of the {{.Name}}.
-func ({{.Name}}) Mixin() []ent.Mixin {
-{{"\t"}}return []ent.Mixin{
-{{range $key, $value := .Mixins -}}
-{{"\t\t"}}{{$value}}{},
-{{end}}
-{{"\t"}}}
-}
