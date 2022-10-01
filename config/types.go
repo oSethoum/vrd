@@ -8,8 +8,9 @@ type Config struct {
 }
 
 type Ent struct {
-	Package string `json:"package"`
-	Graphql bool   `json:"graphql"`
-	Auth    bool   `json:"auth"`
-	Privacy bool   `json:"privacy"`
+	Package     string `json:"package"`
+	Graphql     bool   `json:"graphql"`
+	Auth        bool   `json:"auth"`
+	Privacy     bool   `json:"privacy"`
+	PrivacyNode bool   `json:"privacyNode"`
 }

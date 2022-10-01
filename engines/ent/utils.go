@@ -29,13 +29,13 @@ func WriteFiles(files []types.File, c config.Config) {
 func ParseTemplate(fileName string, v interface{}) string {
 	f, err := Assets.ReadFile("templates/" + fileName)
 	if err != nil {
-		log.Fatalf("Engine: error reading file %s", fileName)
+		log.Fatalf("Engine: error reading file %s | %s", fileName, err.Error())
 	}
 
 	t, err := template.New(fileName).Parse(string(f))
 
 	if err != nil {
-		log.Fatalf("Engine: error parsing template %s", fileName)
+		log.Fatalf("Engine: error parsing template %s | %s", fileName, err.Error())
 	}
 
 	out := bytes.Buffer{}
@@ -43,7 +43,7 @@ func ParseTemplate(fileName string, v interface{}) string {
 	err = t.Execute(&out, v)
 
 	if err != nil {
-		log.Fatalf("Engine: error executing template %s", fileName)
+		log.Fatalf("Engine: error executing template %s | %s", fileName, err.Error())
 	}
 
 	// correcting the characters

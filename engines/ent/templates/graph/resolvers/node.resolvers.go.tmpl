@@ -5,6 +5,7 @@ package resolvers
 
 import (
 	"context"
+	"github.com/oklog/ulid/v2"
 	"{{.Config.Ent.Package}}/auth"
 	"{{.Config.Ent.Package}}/ent"
 	"{{.Config.Ent.Package}}/graph/models"
@@ -53,16 +54,16 @@ func (r *mutationResolver) Delete{{.Node.Name}}(ctx context.Context, id int) (*e
 
 // {{.Pascals .Node.Name}} is the resolver for the {{.Camels .Node.Name}} field.
 func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, event models.Event, query *models.{{.Pascals .Node.Name}}QueryInput) (<-chan *ent.{{.Node.Name}}Connection, error) {
-	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	clientId := ulid.Make().String()
 	channel := make(chan *ent.{{.Node.Name}}Connection, 1)
 	println("----------------------------------------------------")
-	println("Socket Client: ", socketClient)
+	println("Socket Client: ", clientId)
 	println("Entity: {{.Pascals .Node.Name}}")
 	println("Event: ", event)
 	println("----------------------------------------------------")
 
 	r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
-	r.{{.Pascals .Node.Name}}Listenners[socketClient] = {{.Pascals .Node.Name}}Listenner{
+	r.{{.Pascals .Node.Name}}Listenners[clientId] = {{.Pascals .Node.Name}}Listenner{
 		Context: ctx,
 		Channel: channel,
 		Event:   event,
@@ -73,11 +74,11 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 	go func() {
 		<-ctx.Done()
 		println("----------------------------------------------------")
-		println("Socket Client: ", socketClient)
+		println("Socket Client: ", clientId)
 		println("Disconnected")
 		println("----------------------------------------------------")
 		r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
-		delete(r.{{.Pascals .Node.Name}}Listenners, socketClient)
+		delete(r.{{.Pascals .Node.Name}}Listenners, clientId)
 		r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
 	}()
 
@@ -86,17 +87,17 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 
 // {{.Node.Name}} is the resolver for the {{.Node.Name}} field.
 func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, event models.Event, id int) (<-chan *ent.{{.Node.Name}}, error) {
-	socketClient := ctx.Value(auth.ContextKey{Key: "socketClient"}).(string)
+	clientId := ulid.Make().String()
 	channel := make(chan *ent.{{.Node.Name}}, 1)
 	println("----------------------------------------------------")
-	println("Socket Client: ", socketClient)
+	println("Socket Client: ", clientId)
 	println("Entity: {{.Pascals .Node.Name}}")
 	println("Event: ", event)
 	println("Disconnected")
 	println("----------------------------------------------------")
 
 	r.{{.Node.Name}}ListennersMutext.Lock()
-	r.{{.Node.Name}}Listenners[socketClient] = {{.Node.Name}}Listenner{
+	r.{{.Node.Name}}Listenners[clientId] = {{.Node.Name}}Listenner{
 		Context: ctx,
 		ID:      id,
 		Channel: channel,
@@ -108,12 +109,12 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, event models.
 	go func() {
 		<-ctx.Done()
 		println("----------------------------------------------------")
-		println("Socket Client: ", socketClient)
+		println("Socket Client: ", clientId)
 		println("Disconnected")
 		println("----------------------------------------------------")
 
 		r.{{.Node.Name}}ListennersMutext.Lock()
-		delete(r.{{.Node.Name}}Listenners, socketClient)
+		delete(r.{{.Node.Name}}Listenners, clientId)
 		r.{{.Node.Name}}ListennersMutext.Unlock()
 	}()
 

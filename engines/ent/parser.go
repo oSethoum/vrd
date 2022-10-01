@@ -57,7 +57,7 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		},
 	}
 
-	if config.Ent.Privacy {
+	if config.Ent.Privacy && config.Ent.PrivacyNode {
 		node.Imports = append(node.Imports, "\t\""+config.Ent.Package+"/ent/privacy\"")
 		node.Imports = append(node.Imports, "\t\""+config.Ent.Package+"/auth\"")
 	}

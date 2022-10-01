@@ -16,19 +16,24 @@ func Init() Config {
 			Input:  "vrd/db.vuerd.json",
 			Output: "./",
 			Ent: &Ent{
-				Package: "app",
-				Graphql: true,
-				Auth:    true,
-				Privacy: true,
+				Package:     "app",
+				Graphql:     true,
+				Auth:        true,
+				Privacy:     true,
+				PrivacyNode: false,
 			},
 		}
-		utils.WriteJSON("vrd/db.vuerd.json", nil)
-		utils.WriteJSON("vrd/vrd.config.json", config)
 		println("vrd initialized successfully")
+		utils.WriteJSON("vrd/vrd.config.json", config)
 		os.Exit(0)
 	} else {
 		utils.ReadJSON("vrd/vrd.config.json", &config)
 		checkConfig(config)
+	}
+
+	_, err = os.Stat("vrd/db.vuerd.json")
+	if err != nil {
+		utils.WriteJSON("vrd/db.vuerd.json", "")
 	}
 
 	return config
