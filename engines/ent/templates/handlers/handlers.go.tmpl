@@ -15,24 +15,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func PlaygroundHandler() echo.HandlerFunc {
+func PlaygroundHandler(c echo.Context) error {
 	h := playground.Handler("GraphQL", "/query")
-
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
+	h.ServeHTTP(c.Response(), c.Request())
+	return nil
 }
 
-func PlaygroundWsHandler() echo.HandlerFunc {
+func PlaygroundWsHandler(c echo.Context) error {
 	h := playground.Handler("GraphQL WS", "/subscription")
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
+	h.ServeHTTP(c.Response(), c.Request())
+	return nil
 }
 
-func GraphqlWsHandler() echo.HandlerFunc {
+
+func GraphqlWsHandler(c echo.Context) error {
 	h := handler.New(resolvers.ExecutableSchema())
 	h.Use(extension.Introspection{})
 	// h.Use(entgql.Transactioner{TxOpener: db.Client})
@@ -44,25 +40,23 @@ func GraphqlWsHandler() echo.HandlerFunc {
 				return true
 			},
 		},
-		{{if and .Config.Ent.Privacy .Config.Ent.Auth}}
+		{{- if and .Config.Ent.Privacy .Config.Ent.Auth}}
 		//InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
 		//	return auth.WebSocketInit(ctx, initPayload)
 		//},
-		{{end}}
+		{{- end}}
 	})
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
+
+	h.ServeHTTP(c.Response(), c.Request())
+	return nil
 }
 
-func GraphqlHandler() echo.HandlerFunc {
+
+func GraphqlHandler(c echo.Context) error {
 	h := handler.NewDefaultServer(resolvers.ExecutableSchema())
 	h.Use(entgql.Transactioner{TxOpener: db.Client})
 	h.Use(extension.Introspection{})
-
-	return func(c echo.Context) error {
-		h.ServeHTTP(c.Response(), c.Request())
-		return nil
-	}
+	h.ServeHTTP(c.Response(), c.Request())
+	return nil
 }
+
