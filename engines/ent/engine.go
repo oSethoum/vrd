@@ -14,6 +14,7 @@ var Assets embed.FS
 
 func Engine(state types.State, config config.Config) {
 	st := Parse(state, config)
+	st.Nodes = SortNodes(st.Nodes)
 	utils.WriteJSON("vrd/output.json", st)
 
 	files := []types.File{}
@@ -55,6 +56,10 @@ func Engine(state types.State, config config.Config) {
 		types.File{
 			Path:   "server.go",
 			Buffer: ParseTemplate("server.go.tmpl", data),
+		},
+		types.File{
+			Path:   ".gitignore",
+			Buffer: "vrd",
 		},
 	)
 
@@ -100,10 +105,28 @@ func Engine(state types.State, config config.Config) {
 				Path:   "handlers/handlers.go",
 				Buffer: ParseTemplate("handlers/handlers.go.tmpl", data),
 			},
+			types.File{
+				Path:   "graph/resolvers/utils.go",
+				Buffer: ParseTemplate("graph/resolvers/utils.go.tmpl", data),
+			},
 		)
 
-		for _, node := range st.Nodes {
+		if config.Ent.FileUpload {
+			files = append(files,
+				types.File{
+					Path:   "graph/resolvers/upload.resolvers.go",
+					Buffer: ParseTemplate("graph/resolvers/upload.resolvers.go.tmpl", nil),
+				},
+				types.File{
+					Path:   "graph/schemas/upload.graphqls",
+					Buffer: ParseTemplate("graph/schemas/upload.graphqls.go.tmpl", nil),
+				},
+			)
+		}
+
+		for index, node := range st.Nodes {
 			data.Node = node
+			data.Index = index
 			files = append(files,
 				types.File{
 					Path:   fmt.Sprintf("graph/resolvers/%s.resolvers.go", node.Camel(node.Name)),

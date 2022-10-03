@@ -11,6 +11,7 @@ type TemplateData struct {
 	Nodes  []Node
 	Mixins map[string]Mixin
 	Node   Node
+	Index  int
 	Mixin  Mixin
 	Config config.Config
 }

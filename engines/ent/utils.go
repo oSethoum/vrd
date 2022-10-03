@@ -51,3 +51,17 @@ func ParseTemplate(fileName string, v interface{}) string {
 	str = strings.ReplaceAll(str, "&lt;", "<")
 	return str
 }
+
+func SortNodes(nodes []Node) []Node {
+	for i := 0; i < len(nodes)-1; i++ {
+		for j := i; j < len(nodes); j++ {
+			if strings.Compare(nodes[i].Name, nodes[j].Name) == 1 {
+				node := nodes[i]
+				nodes[i] = nodes[j]
+				nodes[j] = node
+			}
+		}
+	}
+
+	return nodes
+}
