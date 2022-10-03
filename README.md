@@ -4,7 +4,6 @@
 
 The role of vuerd is to generate code for ORMs based on the [ERD Editor](https://marketplace.visualstudio.com/items?itemName=dineug.vuerd-vscode) vscode extension.
 
-
 ## Docs:
 
 Download the binary and add it to your path, and from your command line
@@ -27,12 +26,11 @@ that will initialize a config file `config.vrd.json`
     "privacy": true
   }
 }
-
 ```
 
 ## Supported ORMs
 
-We currently support only [Ent](https://entgo.io/) but we are planning to support more int the future.
+We currently support only [Ent](https://entgo.io/) but we are planning to support more (gorm, prisma) int the future.
 
 ## Contributions
 

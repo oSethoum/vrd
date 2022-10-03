@@ -17,3 +17,16 @@ type Ent struct {
 	Debug       bool   `json:"debug"`
 	Database    string `json:"database"` //sqlite3, mysql, postgres
 }
+
+type Gorm struct {
+	Package    string `json:"package"`
+	Auth       bool   `json:"auth"`
+	Graphql    bool   `json:"graphql"`
+	FileUpload bool   `json:"fileUpload"`
+	Debug      bool   `json:"debug"`
+	Database   string `json:"database"` //sqlite3, mysql, postgres
+}
+
+type Prisma struct {
+	Database string `json:"database"` //sqlite3, mysql, postgres
+}
