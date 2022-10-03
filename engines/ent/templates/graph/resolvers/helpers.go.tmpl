@@ -3,13 +3,16 @@ package resolvers
 import (
    "{{.Config.Ent.Package}}/graph/models"
    "{{.Config.Ent.Package}}/ent"
+	{{if .Config.Ent.Debug}}
+	"log"
+	{{end}}
 )
-
+{{$config := .Config}}
 {{range .Nodes}}
 func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event) {
 	r.{{.Pascals .Name}}ListennersMutext.Lock()
 	for key := range r.{{.Pascals .Name}}Listenners {
-		if r.{{.Pascals .Name}}Listenners[key].Event == event {
+		if EventIn(event, r.{{.Pascals .Name}}Listenners[key].Events) {
 		   println("Client: ", key, "\nEvent: ", event)
 			query := r.{{.Pascals .Name}}Listenners[key].Query
 			if query == nil {
@@ -20,6 +23,9 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 
 			if err == nil {
 				r.{{.Pascals .Name}}Listenners[key].Channel <- entities
+				{{- if $config.Ent.Debug}}
+				log.Printf("Notifying Client: %s | Event: %v | Type: {{.Pascals .Name}}", key, r.{{.Pascals .Name}}Listenners[key].Events)
+				{{- end}}
 			}
 
 		}
@@ -30,8 +36,11 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 func Notify{{.Name}}Listenners(r *mutationResolver, event models.Event, entity *ent.{{.Name}}) {
 	r.{{.Name}}ListennersMutext.Lock()
 	for key := range r.{{.Name}}Listenners {
-		if r.{{.Name}}Listenners[key].Event == event && r.{{.Name}}Listenners[key].ID == entity.ID {
+		if EventIn(event, r.{{.Name}}Listenners[key].Events) && r.{{.Name}}Listenners[key].ID == entity.ID {
 			r.{{.Name}}Listenners[key].Channel <- entity
+			{{- if $config.Ent.Debug}}
+			log.Printf("Notifying Client: %s | Event: %v | Type: {{.Name}}", key, r.{{.Name}}Listenners[key].Events)
+			{{- end}}
 		}
 	}
 	r.{{.Name}}ListennersMutext.Unlock()

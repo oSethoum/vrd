@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"{{.Config.Ent.Package}}/ent"
+	"{{.Config.Ent.Package}}/db"
 	"{{.Config.Ent.Package}}/graph/resolvers"
 	"net/http"
 	"time"
@@ -32,9 +32,10 @@ func PlaygroundWsHandler() echo.HandlerFunc {
 	}
 }
 
-func GraphqlWsHandler(client *ent.Client) echo.HandlerFunc {
+func GraphqlWsHandler() echo.HandlerFunc {
 	h := handler.New(resolvers.ExecutableSchema())
 	h.Use(extension.Introspection{})
+	// h.Use(entgql.Transactioner{TxOpener: db.Client})
 	h.AddTransport(transport.POST{})
 	h.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -43,9 +44,11 @@ func GraphqlWsHandler(client *ent.Client) echo.HandlerFunc {
 				return true
 			},
 		},
-		// InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
-		// 	return auth.WebSocketInit(ctx, initPayload)
-		// },
+		{{if and .Config.Ent.Privacy .Config.Ent.Auth}}
+		//InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
+		//	return auth.WebSocketInit(ctx, initPayload)
+		//},
+		{{end}}
 	})
 	return func(c echo.Context) error {
 		h.ServeHTTP(c.Response(), c.Request())
@@ -53,9 +56,9 @@ func GraphqlWsHandler(client *ent.Client) echo.HandlerFunc {
 	}
 }
 
-func GraphqlHandler(client *ent.Client) echo.HandlerFunc {
+func GraphqlHandler() echo.HandlerFunc {
 	h := handler.NewDefaultServer(resolvers.ExecutableSchema())
-	h.Use(entgql.Transactioner{TxOpener: client})
+	h.Use(entgql.Transactioner{TxOpener: db.Client})
 	h.Use(extension.Introspection{})
 
 	return func(c echo.Context) error {

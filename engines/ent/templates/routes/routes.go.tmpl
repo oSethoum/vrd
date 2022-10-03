@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"{{.Config.Ent.Package}}/db"
 	"{{.Config.Ent.Package}}/handlers"
 	"{{.Config.Ent.Package}}/auth"
 
@@ -16,6 +15,6 @@ func Init(e *echo.Echo) {
 	r.Any("", handlers.PlaygroundHandler())
 	r.Any("ws", handlers.PlaygroundWsHandler())
 
-	r.Any("query", handlers.GraphqlHandler(db.DB))
-	r.Any("subscriptions", handlers.GraphqlWsHandler(db.DB))
+	r.Any("query", handlers.GraphqlHandler())
+	r.Any("subscriptions", handlers.GraphqlWsHandler())
 }

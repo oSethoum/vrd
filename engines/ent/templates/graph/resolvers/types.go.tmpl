@@ -10,14 +10,14 @@ import (
 type {{.Name}}Listenner struct {
 	Context context.Context
 	ID      int
-	Event   models.Event
+	Events   []models.Event
 	Channel chan *ent.{{.Name}}
 }
 
 type {{.Pascals .Name}}Listenner struct {
 	Context context.Context
 	Channel chan *ent.{{.Name}}Connection
-	Event   models.Event
+	Events   []models.Event
 	Query   *models.{{.Pascals .Name}}QueryInput
 }
 {{end}}

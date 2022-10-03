@@ -1,0 +1,24 @@
+package resolvers
+
+import (
+   "{{.Config.Ent.Package}}/graph/models"
+)
+
+func RemoveDuplicates(events []models.Event) []models.Event {
+	ev := []models.Event{}
+	for _, e := range events {
+		if !EventIn(e, ev) {
+			ev = append(ev, e)
+		}
+	}
+	return ev
+}
+
+func EventIn(event models.Event, events []models.Event) bool {
+	for _, e := range events {
+		if e == event {
+			return true
+		}
+	}
+	return false
+}

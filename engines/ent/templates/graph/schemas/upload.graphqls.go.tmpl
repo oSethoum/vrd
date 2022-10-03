@@ -1,0 +1,6 @@
+"The `UploadFile, // b.txt` scalar type represents a multipart file upload."
+scalar Upload
+
+extend type Mutation {
+  uploadFile(file: Upload!): Boolean!
+}

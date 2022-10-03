@@ -17,7 +17,7 @@ func Login(c echo.Context) error {
 	c.Bind(&login)
 
 	// check if the user is valid
-	u, err := db.DB.User.Query().Where(user.UsernameEQ(login.Username)).First(ctx)
+	u, err := db.Client.User.Query().Where(user.UsernameEQ(login.Username)).First(ctx)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Respose{Errors: map[string]string{"username": "User not found"}})

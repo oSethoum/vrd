@@ -18,6 +18,7 @@ input {{.Pascals .Node.Name}}QueryInput {
 }
 
 extend type Subscription {
-  {{.Camels .Node.Name}}(event: Event!, query: {{.Pascals .Node.Name}}QueryInput): {{.Node.Name}}Connection!
-  {{.Node.Name}}(event: Event!, id: ID!): {{.Node.Name}}!
+  {{.Camels .Node.Name}}(events: [Event!]!, query: {{.Pascals .Node.Name}}QueryInput): {{.Node.Name}}Connection!
+  {{.Node.Name}}(events: [Event!]!, id: ID!): {{.Node.Name}}!
 }
+

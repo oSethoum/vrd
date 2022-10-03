@@ -31,7 +31,7 @@ func ExecutableSchema() graphql.ExecutableSchema {
 	if schema == nil {
 		schema = new(graphql.ExecutableSchema)
 		*schema = generated.NewExecutableSchema(generated.Config{Resolvers: &Resolver{
-			Client: db.DB,
+			Client: db.Client,
 
 			{{range .Nodes}}
 			{{.Name}}Listenners:        			make(map[string]{{.Name}}Listenner),

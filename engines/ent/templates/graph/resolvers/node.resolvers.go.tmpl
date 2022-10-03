@@ -53,30 +53,34 @@ func (r *mutationResolver) Delete{{.Node.Name}}(ctx context.Context, id int) (*e
 }
 
 // {{.Pascals .Node.Name}} is the resolver for the {{.Camels .Node.Name}} field.
-func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, event models.Event, query *models.{{.Pascals .Node.Name}}QueryInput) (<-chan *ent.{{.Node.Name}}Connection, error) {
+func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, events []models.Event, query *models.{{.Pascals .Node.Name}}QueryInput) (<-chan *ent.{{.Node.Name}}Connection, error) {
 	clientId := ulid.Make().String()
+	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}Connection, 1)
+	{{if .Config.Ent.Debug}}
 	println("----------------------------------------------------")
-	println("Socket Client: ", clientId)
+	println("Client: ", clientId)
 	println("Entity: {{.Pascals .Node.Name}}")
-	println("Event: ", event)
+	println("Events: ", events)
 	println("----------------------------------------------------")
-
+	{{end}}
 	r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
 	r.{{.Pascals .Node.Name}}Listenners[clientId] = {{.Pascals .Node.Name}}Listenner{
 		Context: ctx,
 		Channel: channel,
-		Event:   event,
+		Events:   events,
 		Query:   query,
 	}
 	r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
 
 	go func() {
 		<-ctx.Done()
+		{{if .Config.Ent.Debug}}
 		println("----------------------------------------------------")
-		println("Socket Client: ", clientId)
+		println("Client: ", clientId)
 		println("Disconnected")
 		println("----------------------------------------------------")
+		{{end}}
 		r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
 		delete(r.{{.Pascals .Node.Name}}Listenners, clientId)
 		r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
@@ -86,33 +90,36 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 }
 
 // {{.Node.Name}} is the resolver for the {{.Node.Name}} field.
-func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, event models.Event, id int) (<-chan *ent.{{.Node.Name}}, error) {
+func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []models.Event, id int) (<-chan *ent.{{.Node.Name}}, error) {
 	clientId := ulid.Make().String()
+	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}, 1)
+	{{if .Config.Ent.Debug}}
 	println("----------------------------------------------------")
-	println("Socket Client: ", clientId)
+	println("Client: ", clientId)
 	println("Entity: {{.Pascals .Node.Name}}")
-	println("Event: ", event)
+	println("Events: ", events)
 	println("Disconnected")
 	println("----------------------------------------------------")
-
+	{{end}}
 	r.{{.Node.Name}}ListennersMutext.Lock()
 	r.{{.Node.Name}}Listenners[clientId] = {{.Node.Name}}Listenner{
 		Context: ctx,
 		ID:      id,
 		Channel: channel,
-		Event:   event,
+		Events:   events,
 	}
 	r.{{.Node.Name}}ListennersMutext.Unlock()
 
 	// remove listenner when the socket is disconnected
 	go func() {
 		<-ctx.Done()
+		{{if .Config.Ent.Debug}}
 		println("----------------------------------------------------")
-		println("Socket Client: ", clientId)
+		println("Client: ", clientId)
 		println("Disconnected")
 		println("----------------------------------------------------")
-
+		{{end}}
 		r.{{.Node.Name}}ListennersMutext.Lock()
 		delete(r.{{.Node.Name}}Listenners, clientId)
 		r.{{.Node.Name}}ListennersMutext.Unlock()
@@ -120,3 +127,14 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, event models.
 
 	return channel, nil
 }
+
+{{if eq .Index 0}}
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
+{{end}}
