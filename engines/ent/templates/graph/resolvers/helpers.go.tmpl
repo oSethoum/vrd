@@ -13,7 +13,6 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 	r.{{.Pascals .Name}}ListennersMutext.Lock()
 	for key := range r.{{.Pascals .Name}}Listenners {
 		if EventIn(event, r.{{.Pascals .Name}}Listenners[key].Events) {
-		   println("Client: ", key, "\nEvent: ", event)
 			query := r.{{.Pascals .Name}}Listenners[key].Query
 			if query == nil {
 				query = &models.{{.Pascals .Name}}QueryInput{}
@@ -24,7 +23,7 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 			if err == nil {
 				r.{{.Pascals .Name}}Listenners[key].Channel <- entities
 				{{- if $config.Ent.Debug}}
-				log.Printf("Notifying Client: %s | Event: %v | Type: {{.Pascals .Name}}", key, r.{{.Pascals .Name}}Listenners[key].Events)
+				log.Printf("Client: %s | Event: %v | Type: {{.Pascals .Name}} | Action: Notify", key, event)
 				{{- end}}
 			}
 
@@ -39,7 +38,7 @@ func Notify{{.Name}}Listenners(r *mutationResolver, event models.Event, entity *
 		if EventIn(event, r.{{.Name}}Listenners[key].Events) && r.{{.Name}}Listenners[key].ID == entity.ID {
 			r.{{.Name}}Listenners[key].Channel <- entity
 			{{- if $config.Ent.Debug}}
-			log.Printf("Notifying Client: %s | Event: %v | Type: {{.Name}}", key, r.{{.Name}}Listenners[key].Events)
+			log.Printf("Client: %s | Event: %s | Type: {{.Name}} | Action: Notify", key, event)
 			{{- end}}
 		}
 	}

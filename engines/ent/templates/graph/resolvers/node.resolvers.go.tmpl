@@ -6,6 +6,9 @@ package resolvers
 import (
 	"context"
 	"github.com/oklog/ulid/v2"
+	{{if .Config.Ent.Debug}}
+	"log"
+	{{end}}
 	"{{.Config.Ent.Package}}/auth"
 	"{{.Config.Ent.Package}}/ent"
 	"{{.Config.Ent.Package}}/graph/models"
@@ -58,11 +61,7 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}Connection, 1)
 	{{if .Config.Ent.Debug}}
-	println("----------------------------------------------------")
-	println("Client: ", clientId)
-	println("Entity: {{.Pascals .Node.Name}}")
-	println("Events: ", events)
-	println("----------------------------------------------------")
+	log.Printf("ClientId: %s | Events: %v | Entity: {{.Pascals .Node.Name}} | Status: Connected", clientId, events)
 	{{end}}
 	r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
 	r.{{.Pascals .Node.Name}}Listenners[clientId] = {{.Pascals .Node.Name}}Listenner{
@@ -76,10 +75,7 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 	go func() {
 		<-ctx.Done()
 		{{if .Config.Ent.Debug}}
-		println("----------------------------------------------------")
-		println("Client: ", clientId)
-		println("Disconnected")
-		println("----------------------------------------------------")
+		log.Printf("ClientId: %s | Events: %v | Entity: {{.Pascals .Node.Name}} | Status: Disconnected", clientId, events)
 		{{end}}
 		r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
 		delete(r.{{.Pascals .Node.Name}}Listenners, clientId)
@@ -95,12 +91,7 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []mode
 	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}, 1)
 	{{if .Config.Ent.Debug}}
-	println("----------------------------------------------------")
-	println("Client: ", clientId)
-	println("Entity: {{.Pascals .Node.Name}}")
-	println("Events: ", events)
-	println("Disconnected")
-	println("----------------------------------------------------")
+	log.Printf("ClientId: %s | Events: %v | Type: {{.Node.Name}} | Status: Connected", clientId, events)
 	{{end}}
 	r.{{.Node.Name}}ListennersMutext.Lock()
 	r.{{.Node.Name}}Listenners[clientId] = {{.Node.Name}}Listenner{
@@ -111,14 +102,10 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []mode
 	}
 	r.{{.Node.Name}}ListennersMutext.Unlock()
 
-	// remove listenner when the socket is disconnected
 	go func() {
 		<-ctx.Done()
 		{{if .Config.Ent.Debug}}
-		println("----------------------------------------------------")
-		println("Client: ", clientId)
-		println("Disconnected")
-		println("----------------------------------------------------")
+		log.Printf("ClientId: %s | Events: %v | Type: {{.Node.Name}} | Status: Disconnected", clientId, events)
 		{{end}}
 		r.{{.Node.Name}}ListennersMutext.Lock()
 		delete(r.{{.Node.Name}}Listenners, clientId)
