@@ -12,6 +12,8 @@ import (
 	"github.com/gertd/go-pluralize"
 )
 
+//TODO: support same type edges
+
 func Parse(state types.State, config config.Config) State {
 
 	st := State{

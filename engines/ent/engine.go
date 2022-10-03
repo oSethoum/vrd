@@ -15,7 +15,9 @@ var Assets embed.FS
 func Engine(state types.State, config config.Config) {
 	st := Parse(state, config)
 	st.Nodes = SortNodes(st.Nodes)
-	utils.WriteJSON("vrd/output.json", st)
+	if config.Ent.Debug {
+		utils.WriteJSON("vrd/output.json", st)
+	}
 
 	files := []types.File{}
 	data := TemplateData{
