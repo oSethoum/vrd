@@ -19,6 +19,10 @@ func Parse(state types.State, config config.Config) State {
 		Mixins: make(map[string]Mixin),
 	}
 
+	if len(state.TableState.Tables) == 0 {
+		log.Fatal("Parser: no table found")
+	}
+
 	for _, table := range state.TableState.Tables {
 		if sClean(table.Name) == "" {
 			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
@@ -64,8 +68,12 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 
 	var isM2M bool
 
-	coptions := strings.Split(sClean(table.Comment), "|")
+	tableComment := sClean(table.Comment)
+	coptions := strings.Split(tableComment, "|")
 	for _, cop := range coptions {
+		if cop == "" {
+			continue
+		}
 		if strings.ToLower(cop) == "m2m" {
 			// handle the case of m2m
 			isM2M = true
@@ -77,13 +85,23 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		cops := strings.Split(cop, "=")
 		switch cops[0] {
 		case "nm":
-			node.TableName = cops[1]
+			{
+				node.TableName = cops[1]
+				break
+			}
 
 		case "mxs":
-			mxs := strings.Split(strings.ReplaceAll(strings.ReplaceAll(cops[1], "(", ""), ")", ""), ",")
-			for _, mx := range mxs {
-				node.Mixins = append(node.Mixins, mixins[mx].Name)
+			{
+
+				mxs := strings.Split(strings.ReplaceAll(strings.ReplaceAll(cops[1], "(", ""), ")", ""), ",")
+				for _, mx := range mxs {
+					node.Mixins = append(node.Mixins, mixins[mx].Name)
+				}
+				break
 			}
+
+		default:
+			fmt.Printf("Parser: warning unknwon param in table's comment: %s, param: %s", table.Name, cops[0])
 		}
 	}
 
@@ -98,12 +116,12 @@ func parseTableNode(state *types.State, mixins map[string]Mixin, table *types.Ta
 		columnErrors(column, table.Name)
 
 		if isM2M && column.Ui.Fk {
-			field := parseColumn(&column, config)
+			field := parseColumn(table, &column, config)
 			node.Fields = append(node.Fields, field)
 		}
 
 		if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
-			field := parseColumn(&column, config)
+			field := parseColumn(table, &column, config)
 
 			if strings.Contains(strings.ToLower(field.Type), "time") && !in("\t\"time\"", node.Imports) {
 				node.Imports = append(node.Imports, "\t\"time\"")
@@ -268,7 +286,12 @@ func parseTableMixin(state *types.State, table *types.Table, config *config.Conf
 		cops := strings.Split(cop, "=")
 		switch cops[0] {
 		case "nx":
-			mixin.Alias = cops[1]
+			{
+				mixin.Alias = cops[1]
+				break
+			}
+		default:
+			fmt.Printf("Parser: warning unknwon param in table's comment: %s, param: %s", table.Name, cops[0])
 		}
 	}
 
@@ -279,12 +302,12 @@ func parseTableMixin(state *types.State, table *types.Table, config *config.Conf
 		columnErrors(column, table.Name)
 
 		if isM2M && column.Ui.Fk {
-			field := parseColumn(&column, config)
+			field := parseColumn(table, &column, config)
 			mixin.Fields = append(mixin.Fields, field)
 		}
 
 		if !column.Ui.Pk && !column.Ui.Fk && !column.Ui.Pfk {
-			field := parseColumn(&column, config)
+			field := parseColumn(table, &column, config)
 
 			if strings.Contains(strings.ToLower(field.Type), "time") && !in("\t\"time\"", mixin.Imports) {
 				mixin.Imports = append(mixin.Imports, "\t\"time\"")
@@ -418,7 +441,7 @@ func findTable(state *types.State, tableId string) *types.Table {
 	return nil
 }
 
-func parseColumn(column *types.Column, config *config.Config) Field {
+func parseColumn(table *types.Table, column *types.Column, config *config.Config) Field {
 	datatype := parseType(column.DataType)
 	options := []string{}
 	annotations := []string{}
@@ -434,15 +457,33 @@ func parseColumn(column *types.Column, config *config.Config) Field {
 			for _, skip := range skips {
 				switch skip {
 				case "all":
-					gqlSkips = append(gqlSkips, "entgql.SkipAll")
+					{
+						gqlSkips = append(gqlSkips, "entgql.SkipAll")
+						break
+					}
 				case "type":
-					gqlSkips = append(gqlSkips, "entgql.SkipType")
+					{
+						gqlSkips = append(gqlSkips, "entgql.SkipType")
+						break
+					}
+
 				case "create":
-					gqlSkips = append(gqlSkips, "entgql.SkipMutationCreateInput")
+					{
+						gqlSkips = append(gqlSkips, "entgql.SkipMutationCreateInput")
+						break
+					}
 				case "update":
-					gqlSkips = append(gqlSkips, "entgql.SkipMutationUpdateInput")
+					{
+						gqlSkips = append(gqlSkips, "entgql.SkipMutationUpdateInput")
+						break
+					}
 				case "where":
-					gqlSkips = append(gqlSkips, "entgql.SkipWhereInput")
+					{
+						gqlSkips = append(gqlSkips, "entgql.SkipWhereInput")
+						break
+					}
+				default:
+					fmt.Printf("Parser: warning unknwon param in table: %s, column: %s, param: %s", table.Name, column.Name, skip)
 				}
 
 			}
@@ -462,11 +503,21 @@ func parseColumn(column *types.Column, config *config.Config) Field {
 			if datatype == "String" || datatype == "Bytes" {
 				switch arr[0] {
 				case "min":
-					options = append(options, "MinLen("+arr[1]+")")
+					{
+						options = append(options, "MinLen("+arr[1]+")")
+						break
+					}
 
 				case "max":
-					options = append(options, "MaxLen("+arr[1]+")")
+					{
+						options = append(options, "MaxLen("+arr[1]+")")
+						break
+					}
+
+				default:
+					fmt.Printf("Parser: warning unknwon param in table: %s, column: %s, param: %s", table.Name, column.Name, arr[0])
 				}
+
 			}
 
 			if datatype == "String" && arr[0] == "match" {
@@ -476,15 +527,28 @@ func parseColumn(column *types.Column, config *config.Config) Field {
 			if strings.Contains(datatype, "Int") || strings.Contains(datatype, "Float") {
 				switch arr[0] {
 				case "min":
-					options = append(options, "Min("+arr[1]+")")
+					{
+						options = append(options, "Min("+arr[1]+")")
+						break
+					}
 
 				case "max":
-					options = append(options, "Max("+arr[1]+")")
+					{
+						options = append(options, "Max("+arr[1]+")")
+						break
+					}
 
 				case "range":
-					mnx := strings.Split(arr[1], ",")
-					options = append(options, "Range("+mnx[0]+", "+mnx[1]+")")
+					{
+
+						mnx := strings.Split(arr[1], ",")
+						options = append(options, "Range("+mnx[0]+", "+mnx[1]+")")
+						break
+					}
+				default:
+					fmt.Printf("Parser: warning unknwon param in table: %s, column: %s, param: %s", table.Name, column.Name, arr[0])
 				}
+
 			}
 		}
 	}
@@ -528,7 +592,6 @@ func parseColumn(column *types.Column, config *config.Config) Field {
 	}
 
 	if len(sClean(defaultValue)) > 0 {
-
 		if datatype == "Enum" {
 			if config.Ent.Graphql {
 				options = append(options, "Default("+kace.SnakeUpper(defaultValue)+")")
