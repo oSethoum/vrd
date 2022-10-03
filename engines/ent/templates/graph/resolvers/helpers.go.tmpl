@@ -23,7 +23,7 @@ func Notify{{.Pascals .Name}}Listenners(r *mutationResolver, event models.Event)
 			if err == nil {
 				r.{{.Pascals .Name}}Listenners[key].Channel <- entities
 				{{- if $config.Ent.Debug}}
-				log.Printf("Client: %s | Event: %v | Type: {{.Pascals .Name}} | Action: Notify", key, event)
+				log.Printf("ClientID: %s | Event: %v | Type: {{.Pascals .Name}} | Action: Notify", key, event)
 				{{- end}}
 			}
 
@@ -38,7 +38,7 @@ func Notify{{.Name}}Listenners(r *mutationResolver, event models.Event, entity *
 		if EventIn(event, r.{{.Name}}Listenners[key].Events) && r.{{.Name}}Listenners[key].ID == entity.ID {
 			r.{{.Name}}Listenners[key].Channel <- entity
 			{{- if $config.Ent.Debug}}
-			log.Printf("Client: %s | Event: %s | Type: {{.Name}} | Action: Notify", key, event)
+			log.Printf("ClientID: %s | Event: %s | Type: {{.Name}} | Action: Notify", key, event)
 			{{- end}}
 		}
 	}
