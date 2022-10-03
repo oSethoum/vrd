@@ -33,3 +33,15 @@ func WriteJSON(filePath string, v interface{}) error {
 	err = os.WriteFile(outPath, buffer, 0666)
 	return err
 }
+func WriteFile(filePath string, buffer string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	outPath := path.Join(cwd, filePath)
+	os.MkdirAll(path.Dir(outPath), 0666)
+
+	err = os.WriteFile(outPath, []byte(buffer), 0666)
+	return err
+}
