@@ -13,4 +13,7 @@ type Ent struct {
 	Auth        bool   `json:"auth"`
 	Privacy     bool   `json:"privacy"`
 	PrivacyNode bool   `json:"privacyNode"`
+	FileUpload  bool   `json:"fileUpload"`
+	Debug       bool   `json:"debug"`
+	Database    string `json:"database"` //sqlite3, mysql, postgres
 }
