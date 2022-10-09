@@ -25,6 +25,7 @@ func Parse(state types.State, config config.Config) State {
 		log.Fatal("Parser: no table found")
 	}
 
+	// parsing mixins
 	for _, table := range state.TableState.Tables {
 		if sClean(table.Name) == "" {
 			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
@@ -35,6 +36,7 @@ func Parse(state types.State, config config.Config) State {
 		}
 	}
 
+	// parsing tables
 	for _, table := range state.TableState.Tables {
 		if sClean(table.Name) == "" {
 			log.Fatalf("Parser: Error Table without name id = {%s}", table.Id)
@@ -629,7 +631,7 @@ func parseColumn(table *types.Table, column *types.Column, config *config.Config
 		options = append(options, "Optional()", "Nillable()")
 	}
 
-	if strings.Contains(column.Comment, "-op") {
+	if strings.Contains(column.Comment, "-op") && column.Option.NotNull {
 		options = append(options, "Optional()")
 	}
 
