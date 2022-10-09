@@ -51,6 +51,7 @@ Column:
    Name:                         // use: SnakeCase
    Unique:                       // Unique()
    AI:                           // AutoIncrement()
+   NULL:                         // Optional().Nillable()
    DataType:
       Enum(toGo,done)            // Enum(Ae,Be).{Values(ToGo, Done)|NamedValues(ToGo,to_go, Done, done)}
    Default:
@@ -98,7 +99,6 @@ Relationship:
          // case of m2n relationship with extra fields
          From,users,User,todos:  // edge.From("users", User.Type).Ref("todos").Through("tableName", TableName.Type)
          To,todos,Todo:          // edge.To("todos", Todo.Type).Through("tableName", TableName.Type)
-
 ```
 
 ## Supported ORMs
