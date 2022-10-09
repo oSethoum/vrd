@@ -1,32 +1,32 @@
 package config
 
 type Config struct {
-	Input  string `json:"input"`
-	Output string `json:"output"`
+	Input  string `yaml:"input"`
+	Output string `yaml:"output"`
 
-	Ent *Ent `json:"ent"`
+	Ent *Ent `yaml:"ent"`
 }
 
 type Ent struct {
-	Package     string `json:"package"`
-	Graphql     bool   `json:"graphql"`
-	Auth        bool   `json:"auth"`
-	Privacy     bool   `json:"privacy"`
-	PrivacyNode bool   `json:"-"`
-	FileUpload  bool   `json:"fileUpload"`
-	Debug       bool   `json:"debug"`
-	Database    string `json:"database"` //sqlite3, mysql, postgres
+	Package     string `yaml:"package"`
+	Graphql     bool   `yaml:"graphql"`
+	Auth        bool   `yaml:"auth"`
+	Privacy     bool   `yaml:"privacy"`
+	PrivacyNode bool   `yaml:"-"`
+	FileUpload  bool   `yaml:"fileUpload"`
+	Debug       bool   `yaml:"debug"`
+	Database    string `yaml:"database"` //sqlite3, mysql, postgres
 }
 
 type Gorm struct {
-	Package    string `json:"package"`
-	Auth       bool   `json:"auth"`
-	Graphql    bool   `json:"graphql"`
-	FileUpload bool   `json:"fileUpload"`
-	Debug      bool   `json:"debug"`
-	Database   string `json:"database"` //sqlite3, mysql, postgres
+	Package    string `yaml:"package"`
+	Auth       bool   `yaml:"auth"`
+	Graphql    bool   `yaml:"graphql"`
+	FileUpload bool   `yaml:"fileUpload"`
+	Debug      bool   `yaml:"debug"`
+	Database   string `yaml:"database"` //sqlite3, mysql, postgres
 }
 
 type Prisma struct {
-	Database string `json:"database"` //sqlite3, mysql, postgres
+	Database string `yaml:"database"` //sqlite3, mysql, postgres
 }

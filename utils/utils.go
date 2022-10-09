@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 )
@@ -44,4 +45,9 @@ func WriteFile(filePath string, buffer string) error {
 
 	err = os.WriteFile(outPath, []byte(buffer), 0666)
 	return err
+}
+
+func PrintJSON(obj interface{}) {
+	bytes, _ := json.MarshalIndent(obj, "\t", "\t")
+	fmt.Println(string(bytes))
 }

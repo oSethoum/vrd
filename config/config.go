@@ -1,13 +1,17 @@
 package config
 
 import (
+	"embed"
 	"log"
 	"os"
 	"strings"
 	"vrd/utils"
+
+	"gopkg.in/yaml.v3"
 )
 
-//TODO: switch from json to yaml in config file
+//go:embed templates
+var Assets embed.FS
 
 func Init() Config {
 	var config Config
@@ -16,29 +20,15 @@ func Init() Config {
 	if err != nil {
 		utils.WriteFile("vrd/db.vuerd.json", "")
 	}
-	_, err = os.Stat("vrd/vrd.config.json")
+	_, err = os.Stat("vrd/vrd.config.yaml")
 
 	if err != nil {
-		config = Config{
-			Input:  "vrd/db.vuerd.json",
-			Output: "./",
-			Ent: &Ent{
-				Package:     "app",
-				Graphql:     true,
-				Auth:        true,
-				Privacy:     true,
-				PrivacyNode: false,
-				FileUpload:  true,
-				Debug:       true,
-				Database:    "sqlite3",
-			},
-		}
 		println("vrd initialized successfully")
-
-		utils.WriteJSON("vrd/vrd.config.json", config)
+		utils.WriteFile("vrd/vrd.config.yaml", utils.ParseTemplate(Assets, "vrd.config.yaml.go.tmpl", nil))
 		os.Exit(0)
 	} else {
-		utils.ReadJSON("vrd/vrd.config.json", &config)
+		b, _ := os.ReadFile("vrd/vrd.config.yaml")
+		yaml.Unmarshal(b, &config)
 		checkConfig(config)
 	}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/gertd/go-pluralize"
 )
 
-//TODO: support same type edges // probably supported by the normal api
 //TODO: support onupdate and ondelete for sql
 
 func Parse(state types.State, config config.Config) State {
