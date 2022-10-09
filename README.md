@@ -12,20 +12,24 @@ Download the binary and add it to your path, and from your command line
 vrd
 ```
 
-that will initialize a config file `config.vrd.json`
+that will initialize a config file `vrd.config.yaml`
 
-```json
-{
-  "input": "db.vuerd.json",
-  "output": "./",
-  "ent": {
-    "package": "app",
-    "graphql": true,
-    "echo": true,
-    "auth": true,
-    "privacy": true
-  }
-}
+```yaml
+# vuerd schema path
+input: vrd/db.vuerd.json
+
+# files output path
+output: ./output
+
+# ent config
+ent:
+  package: app
+  graphql: true
+  auth: true
+  privacy: true
+  file_upload: true
+  debug: true
+  database: sqlite3 # sqlite3 | postgres | mysql
 ```
 
 ## Supported ORMs
