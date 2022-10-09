@@ -7,6 +7,8 @@ import (
 	"vrd/utils"
 )
 
+//TODO: switch from json to yaml in config file
+
 func Init() Config {
 	var config Config
 
