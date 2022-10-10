@@ -34,71 +34,70 @@ ent:
 
 ## Docs
 
-```txt
-global options separator: |
+```yaml
+# global options separator: |
 
 Table:
    Name:
-      nameMixin                  // decalaration of Mixin
-
+      nameMixin                  # decalaration of Mixin
    Comment:
-      nm=users                   // entsql.Annotation{Table:"users"}
-      mxs(time, ..)              // TimeMixin{} in schema mixins
-      m2m                        // declare that table is m2m relationship
-      nx=time                    // Mixin Alias to be referenced by tables in mxs(nx,...)
+      nm=users                   # entsql.Annotation{Table:"users"}
+      mxs(time, ..)              # TimeMixin{} in schema mixins
+      m2m                        # declare that table is m2m relationship
+      nx=time                    # Mixin Alias to be referenced by tables in mxs(nx,...)
 
 Column:
-   Name:                         // use: SnakeCase
-   Unique:                       // Unique()
-   AI:                           // AutoIncrement()
-   NULL:                         // Optional().Nillable()
+   Name:                         # use: SnakeCase
+   Unique:                       # Unique()
+   AI:                           # AutoIncrement()
+   NULL:                         # Optional().Nillable()
    DataType:
-      Enum(toGo,done)            // Enum(Ae,Be).{Values(ToGo, Done)|NamedValues(ToGo,to_go, Done, done)}
+      Enum(toGo,done)            # Enum(Ae,Be).{Values(ToGo, Done)|NamedValues(ToGo,to_go, Done, done)}
    Default:
-      time.Now                   // Default(time.Now)
+      time.Now                   # Default(time.Now)
    Comment:
-      skip(op1,op2...)           // entgql.Skip(opt1,opt2...)
+      skip(op1,op2...):          # entgql.Skip(opt1,opt2...)
          options:
-            create               // entgql.SkipMutationCreateInput()
-            update,              // entgql.SkipMutationUpdateInput()
-            type,                // entgql.SkipType()
-            all,                 // entgql.SkipAll()
-            where                // entgql.SkipWhereInput()
-      upd=value                  // UpdateDefault(value)
-      min=value                  // MinLength(value) or Min(value)
-      max=value                  // MaxLength(value) or Max(value)
-      match(regx)                // Match(regx)
-      range(x,y)                 // Range(x,y)
-      -nem                       // NotEmpty()
-      -pos                       // Positive()
-      -neg                       // Negative()
-      -nneg                      // NonNegative()
-      -im                        // Immutable()
-      -s                         // Sensitive()
-      -op                        // Optional()
+            create               # entgql.SkipMutationCreateInput()
+            update,              # entgql.SkipMutationUpdateInput()
+            type,                # entgql.SkipType()
+            all,                 # entgql.SkipAll()
+            where                # entgql.SkipWhereInput()
+      upd=value                  # UpdateDefault(value)
+      min=value                  # MinLength(value) or Min(value)
+      max=value                  # MaxLength(value) or Max(value)
+      match(regx)                # Match(regx)
+      range(x,y)                 # Range(x,y)
+      -nem                       # NotEmpty()
+      -pos                       # Positive()
+      -neg                       # Negative()
+      -nneg                      # NonNegative()
+      -im                        # Immutable()
+      -s                         # Sensitive()
+      -op                        # Optional()
 
 Relationship:
    Type:
       OneN:
-         start:                  // edge.To()
-         end:                    // edge.From().Unqiue().Required()
+         start                   # edge.To()
+         end                     # edge.From().Unqiue().Required()
       ZeroN:
-         start:                  // edge.To()
-         end:                    // edge.From().Unqiue()
+         start                   # edge.To()
+         end                     # edge.From().Unqiue()
       OneOnly:
-         start:                  // edge.To().Unique()
-         end:                    // edge.From().Unqiue().Required()
+         start                   # edge.To().Unique()
+         end                     # edge.From().Unqiue().Required()
       ZeroOne:
-         start:                  // edge.To().Unique()
-         end:                    // edge.From().Unqiue()
+         start                   # edge.To().Unique()
+         end                     # edge.From().Unqiue()
    FK:
       Comment:
-         // normal relationship
-         (owner,todos):          // edge.To("todos", Todo.Type) | edge.form("owner", User.Type).Ref("todos")
+         # normal relationship
+         (owner,todos)           # edge.To("todos", Todo.Type) | edge.form("owner", User.Type).Ref("todos")
 
-         // case of m2n relationship with extra fields
-         From,users,User,todos:  // edge.From("users", User.Type).Ref("todos").Through("tableName", TableName.Type)
-         To,todos,Todo:          // edge.To("todos", Todo.Type).Through("tableName", TableName.Type)
+         # case of m2n relationship with extra fields
+         From,users,User,todos   # edge.From("users", User.Type).Ref("todos").Through("tableName", TableName.Type)
+         To,todos,Todo           # edge.To("todos", Todo.Type).Through("tableName", TableName.Type)
 ```
 
 ## Supported ORMs
