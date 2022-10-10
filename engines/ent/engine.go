@@ -3,7 +3,6 @@ package ent
 import (
 	"embed"
 	"fmt"
-	"os"
 
 	"vrd/config"
 	"vrd/types"
@@ -19,8 +18,6 @@ func Engine(state types.State, config config.Config) {
 	if config.Ent.Debug {
 		utils.WriteJSON("vrd/output.json", st)
 	}
-
-	os.Exit(0)
 
 	files := []types.File{}
 	data := TemplateData{

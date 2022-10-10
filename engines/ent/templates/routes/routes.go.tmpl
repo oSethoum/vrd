@@ -10,11 +10,7 @@ import (
 func Init(e *echo.Echo) {
 	e.POST("/login", auth.Login)
 
-	r := e.Group("/")
-
-	r.Any("", handlers.PlaygroundHandler)
-	r.Any("ws", handlers.PlaygroundWsHandler)
-
-	r.Any("query", handlers.GraphqlHandler)
-	r.Any("subscriptions", handlers.GraphqlWsHandler)
+	e.Any("", handlers.PlaygroundHandler)
+	e.Any("query", handlers.GraphqlHandler)
+	e.Any("subscriptions", handlers.GraphqlWsHandler)
 }

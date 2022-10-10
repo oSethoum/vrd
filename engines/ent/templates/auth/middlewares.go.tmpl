@@ -3,6 +3,10 @@ package auth
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	{{- if and .Config.Ent.Privacy .Config.Ent.Auth}}
+	"context"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	{{- end}}
 )
 
 func Protected() echo.MiddlewareFunc {
@@ -13,3 +17,9 @@ func Protected() echo.MiddlewareFunc {
 
 	return middleware.JWTWithConfig(config)
 }
+
+{{- if and .Config.Ent.Privacy .Config.Ent.Auth}}
+func WebSocketInit(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
+	return ctx, nil
+}
+{{- end}}

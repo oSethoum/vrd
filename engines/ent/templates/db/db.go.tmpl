@@ -5,19 +5,39 @@ import (
 	"{{.Config.Ent.Package}}/ent"
 
 	"entgo.io/ent/dialect/sql/schema"
+	{{- if eq .Config.Ent.Database "mysql"}}
+	_ "github.com/go-sql-driver/mysql"
+	{{- end}}
+	
+	{{- if eq .Config.Ent.Database "sqlite3"}}
 	_ "github.com/mattn/go-sqlite3"
+	{{- end}}
 )
 
 var Client *ent.Client
 
 func Init() {
+	
+	{{- if eq .Config.Ent.Database "sqlite3"}}
 	client, err := ent.Open("sqlite3", "file:db.sqlite?_fk=1")
+	{{- end}}
+
+	{{- if eq .Config.Ent.Database "mysql"}}
+	client, err := ent.Open("mysql", "root:pass@tcp(localhost:3306)/test")
+	{{- end}}
 
 	if err != nil {
 		panic(err)
 	}
 
-	err = client.Schema.Create(context.Background(), schema.WithDropColumn(true), schema.WithDropIndex(true))
+	err = client.Schema.Create(
+		context.Background(),
+		schema.WithDropColumn(true),
+		schema.WithDropIndex(true),
+		{{- if .Config.Ent.Graphql}}
+		schema.WithGlobalUniqueID(true),
+		{{- end}}
+	)
 
 	if err != nil {
 		panic(err)
