@@ -1,15 +1,21 @@
-# the path where you'r veuerd schema is
-input: "vrd/db.vuerd.json"
+# vrd config file
 
-# where we output the files
-output: "./output"
+# input vuerd file path
+input: vrd/input.vuerd.json
 
-# ent specefic configuration
+# debug mode prints information
+debug: true
+
+# support sqlite3, mysql, postgres
+database: sqlite3
+
+# ent config
 ent:
-  package: "app"
-  graphql: true
-  auth: true
+  output: ./output
+  package: app
   privacy: true
-  file_upload: true
-  debug: true
-  database: "sqlite3" # sqlite3 | postgres | mysql
+  auth: true
+  graphql:
+    file_upload: true
+    subscription: true
+    relay_connection: true

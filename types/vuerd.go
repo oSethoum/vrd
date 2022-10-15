@@ -1,13 +1,6 @@
 package types
 
-import (
-	"strings"
-
-	"github.com/codemodus/kace"
-	"github.com/gertd/go-pluralize"
-)
-
-type State struct {
+type Vuerd struct {
 	TableState        TableState        `json:"table"`
 	RelationshipState RelationshipState `json:"relationShip"`
 }
@@ -22,7 +15,6 @@ type Table struct {
 	Name    string   `json:"name"`
 	Comment string   `json:"comment"`
 	Columns []Column `json:"columns"`
-	Helper
 }
 
 type Column struct {
@@ -196,70 +188,4 @@ var VuerdTypes = map[string]string{
 	"xml":                "lob",
 	"xmltype":            "string",
 	"year":               "int",
-}
-
-type Helper struct{}
-
-func (Helper) Camel(s string) string {
-	return kace.Camel(s)
-}
-
-func (Helper) Pascal(s string) string {
-	return kace.Pascal(s)
-}
-
-func (Helper) Kebab(s string) string {
-	return kace.Kebab(s)
-}
-
-func (Helper) Snake(s string) string {
-	return kace.Snake(s)
-}
-
-func (Helper) Camels(s string) string {
-	return kace.Camel(pluralize.NewClient().Plural(s))
-}
-
-func (Helper) Pascals(s string) string {
-	return kace.Pascal(pluralize.NewClient().Plural(s))
-}
-
-func (Helper) Kebabs(s string) string {
-	return kace.Kebab(pluralize.NewClient().Plural(s))
-}
-
-func (Helper) Snakes(s string) string {
-	return kace.Snake(pluralize.NewClient().Plural(s))
-}
-
-func (Helper) Plural(s string) string {
-	return pluralize.NewClient().Plural(s)
-}
-
-func (Helper) MultiPlural(s string) string {
-	s = kace.Snake(s)
-	ss := strings.Split(s, "_")
-	vv := ""
-	for _, v := range ss {
-		vv += kace.Pascal(pluralize.NewClient().Plural(v))
-	}
-	return vv
-}
-
-func (Helper) Singular(s string) string {
-	return pluralize.NewClient().Singular(s)
-}
-
-func (Helper) Join(ss []string, args ...string) string {
-	if len(ss) == 0 {
-		return ""
-	}
-	switch len(args) {
-	case 1:
-		return strings.Join(ss, args[0])
-	case 2:
-		return args[0] + strings.Join(ss, args[1])
-	default:
-		return args[0] + strings.Join(ss, args[1]) + args[2]
-	}
 }
