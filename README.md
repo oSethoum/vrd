@@ -2,7 +2,7 @@
 
 ## What is vrd ?
 
-The role of vuerd is to generate code for ORMs based on the [ERD Editor](https://marketplace.visualstudio.com/items?itemName=dineug.vuerd-vscode) vscode extension.
+The role of vrd is to generate code for ORMs based on the [ERD Editor](https://marketplace.visualstudio.com/items?itemName=dineug.vuerd-vscode) vscode extension.
 
 ## Docs:
 
@@ -38,7 +38,7 @@ ent:
     relay_connection: true
 ```
 
-## Docs
+## Ent
 
 ```yaml
 # global options separator: |
