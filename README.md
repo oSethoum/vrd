@@ -15,21 +15,27 @@ vrd
 that will initialize a config file `vrd.config.yaml`
 
 ```yaml
-# vuerd schema path
-input: vrd/db.vuerd.json
+# vrd config file
 
-# files output path
-output: ./output
+# input vuerd file path
+input: vrd/input.vuerd.json
+
+# debug mode prints information
+debug: true
+
+# support sqlite3, mysql, postgres
+database: sqlite3
 
 # ent config
 ent:
+  output: ./output
   package: app
-  graphql: true
-  auth: true
   privacy: true
-  file_upload: true
-  debug: true
-  database: sqlite3 # sqlite3 | postgres | mysql
+  auth: true
+  graphql:
+    file_upload: true
+    subscription: true
+    relay_connection: true
 ```
 
 ## Docs
