@@ -3,6 +3,7 @@ package ent
 import (
 	"embed"
 	"fmt"
+	"os/exec"
 	"path"
 	"vrd/config"
 	"vrd/types"
@@ -59,9 +60,9 @@ func (e *Engine) Start() {
 			Buffer: e.parseTemplate("ent/schema/node.go.tmpl", data),
 		})
 
-		if e.config.Ent.Graphql != p.emptyGraphql {
+		if e.config.Ent.Graphql != nil {
 			e.files = append(e.files, &types.File{
-				Path:   fmt.Sprintf("graph/schemas/%s.go", e.h.Snake(node.Name)),
+				Path:   fmt.Sprintf("graph/schemas/%s.graphqls", e.h.Snake(node.Name)),
 				Buffer: e.parseTemplate("graph/schemas/node.graphqls.go.tmpl", data),
 			})
 			e.files = append(e.files, &types.File{
@@ -80,13 +81,12 @@ func (e *Engine) Start() {
 		})
 	}
 
-	// some files
-	files := []string{"db/db.go", "server.go", "routes/routes.go", "handlers/handlers.go"}
+	files := []string{"db/db.go", "server.go", "routes/routes.go", "handlers/handlers.go", "ent/generate.go"}
 
-	if e.config.Ent.Graphql != p.emptyGraphql {
+	if e.config.Ent.Graphql != nil {
 		files = append(files,
 			"graph/schemas/types.graphqls", "gqlgen.yml", "graph/resolvers/resolver.go",
-			"graph/resolvers/schema.resolvers.go",
+			"graph/resolvers/schema.resolvers.go", "ent/entc.go",
 		)
 
 		if e.config.Ent.Graphql.FileUpload {
@@ -129,6 +129,10 @@ func (e *Engine) Start() {
 	}
 
 	e.writeFiles()
+
+	// format the files
+	err := exec.Command("go", "fmt", "./...").Run()
+	utils.CatchError(utils.Warninig, err)
 }
 
 func (e *Engine) writeFiles() {

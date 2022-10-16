@@ -23,7 +23,7 @@ func Init() *types.Config {
 		utils.WriteFile("vrd/vrd.config.yaml", buffer)
 		_, err := os.Stat(path.Join(cwd, "vrd/input.vuerd.json"))
 		if err != nil {
-			utils.WriteFile("vrd/input.vuerd.json", "")
+			utils.WriteFile("vrd/input.vuerd.json", utils.ParseTemplate(Templates, "input.vuerd.json.go.tmpl", nil))
 		}
 		println("🟢 vrd init")
 		os.Exit(0)

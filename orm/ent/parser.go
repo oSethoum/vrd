@@ -16,10 +16,6 @@ type Parser struct {
 	currentField *Field
 	currentEdge  *Edge
 	h            types.Helper
-
-	// use for comparison
-	emptyGraphql types.Graphql
-	emptyEnt     types.Ent
 }
 
 // Initialize new Parser with the needed dependencies
@@ -30,11 +26,9 @@ func NewParser(vuerd types.Vuerd, config types.Config) *Parser {
 			Nodes:  []*Node{},
 			Mixins: make(map[string]*Node),
 		},
-		h:            types.Helper{},
-		vuerd:        &vuerd,
-		config:       &config,
-		emptyGraphql: types.Graphql{},
-		emptyEnt:     types.Ent{},
+		h:      types.Helper{},
+		vuerd:  &vuerd,
+		config: &config,
 	}
 }
 
@@ -97,7 +91,7 @@ func (p *Parser) ParseTable(table *types.Table) {
 		p.currentNode.Imports = append(p.currentNode.Imports, "\t\""+p.config.Ent.Package+"/auth\"")
 	}
 
-	if p.config.Ent.Graphql != p.emptyGraphql {
+	if p.config.Ent.Graphql != nil {
 		p.currentNode.Imports = append(p.currentNode.Imports, "\t\"entgo.io/contrib/entgql\"")
 	}
 
@@ -141,10 +135,10 @@ func (p *Parser) ParseTable(table *types.Table) {
 			"\t\"entgo.io/ent/dialect/entsql\"",
 		)
 
-		if p.config.Ent.Graphql != p.emptyGraphql {
+		if p.config.Ent.Graphql != nil {
 			p.currentNode.Annotations = append(p.currentNode.Annotations,
 				"entgql.RelayConnection()",
-				"entgql.Mutation(entgql.MutationCreate(), entgql.MutationUpdate())",
+				"entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
 			)
 		}
 
@@ -171,7 +165,7 @@ func (p *Parser) ParseTable(table *types.Table) {
 		}
 
 		p.currentNode.Annotations = append(p.currentNode.Annotations,
-			fmt.Sprintf("entsql.Annotation{Table: %s}", p.currentNode.TableName),
+			fmt.Sprintf("entsql.Annotation{Table: \"%s\"}", p.currentNode.TableName),
 		)
 
 		p.state.Nodes = append(p.state.Nodes, p.currentNode)
@@ -179,6 +173,10 @@ func (p *Parser) ParseTable(table *types.Table) {
 }
 
 func (p *Parser) parseColumn(column *types.Column) {
+
+	if !p.h.InArray(p.currentNode.Imports, "\"entgo.io/ent/schema/field\"") {
+		p.currentNode.Imports = append(p.currentNode.Imports, "\"entgo.io/ent/schema/field\"")
+	}
 
 	if p.h.Clean(column.Name) == "" {
 		utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, has no name", p.currentNode.Name, column.Id))
@@ -196,6 +194,15 @@ func (p *Parser) parseColumn(column *types.Column) {
 
 	p.parseColumnType(column)
 	p.parseColumnOptions(column)
+
+	if len(p.currentField.Skips) > 0 {
+		p.currentField.Annotations = append(p.currentField.Annotations, p.h.Join(p.currentField.Skips, "entgql.Skip(", ",", ")"))
+	}
+
+	if len(p.currentField.Annotations) > 0 {
+		p.currentField.Options = append(p.currentField.Options, p.h.Join(p.currentField.Annotations, "Annotations(", ",", ")"))
+	}
+
 	p.currentNode.Fields = append(p.currentNode.Fields, *p.currentField)
 }
 
@@ -320,7 +327,7 @@ func (p *Parser) parseColumnType(column *types.Column) {
 		p.currentField.Type = "Enum"
 		p.currentField.EnumValues = p.h.CleanSplit(column.DataType, ",", "Enum", "(", ")")
 
-		if p.config.Ent.Graphql != p.emptyGraphql {
+		if p.config.Ent.Graphql != nil {
 			values := p.h.MultiplyArray(p.currentField.EnumValues, p.h.Pascal, p.h.UpperSnake)
 			p.currentField.Options = append(p.currentField.Options, "NamedValues(\""+p.h.Join(values, "\", \"")+"\")")
 		} else {
@@ -343,7 +350,7 @@ func (p *Parser) parseColumnDefault(value string, option string) {
 	if p.currentField.Type == "Enum" {
 		if !p.h.InArray(p.currentField.EnumValues, value) {
 			utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, default value `%s` is not in enum", p.currentNode.Name, p.currentField.Name, value))
-		} else if p.config.Ent.Graphql != p.emptyGraphql {
+		} else if p.config.Ent.Graphql != nil {
 			p.currentField.Options = append(p.currentField.Options, option+"(\"", p.h.UpperSnake(value)+"\")")
 		} else {
 			p.currentField.Options = append(p.currentField.Options, option+"(\"", p.h.Pascal(value)+"\")")
@@ -360,7 +367,7 @@ func (p *Parser) parseColumnDefault(value string, option string) {
 }
 
 func (p *Parser) parseColumnOptions(column *types.Column) {
-	if p.config.Ent.Graphql != p.emptyGraphql {
+	if p.config.Ent.Graphql != nil {
 		if p.h.InArray([]string{"created_at", "updated_at"}, column.Name) {
 			p.currentField.Skips = append(p.currentField.Skips,
 				"entgql.SkipMutationCreateInput",
@@ -369,6 +376,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 		}
 
 		if p.h.InArray([]string{"password"}, column.Name) {
+			p.currentField.Options = append(p.currentField.Options, "Sensitive()")
 			p.currentField.Skips = append(p.currentField.Skips,
 				"entgql.SkipWhereInput",
 				"entgql.SkipType",
@@ -392,8 +400,8 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 		p.parseColumnDefault(p.h.Clean(column.Default), "Default")
 	}
 
-	if p.config.Ent.Graphql != p.emptyGraphql && p.h.InArray(ComparableTypesMap, p.currentField.Type) {
-		p.currentField.Options = append(p.currentField.Options, "entgql.OrderField(\""+p.h.UpperSnake(p.currentField.Name)+"\")")
+	if p.config.Ent.Graphql != nil && p.h.InArray(ComparableTypesMap, p.currentField.Type) {
+		p.currentField.Annotations = append(p.currentField.Annotations, "entgql.OrderField(\""+p.h.UpperSnake(p.currentField.Name)+"\")")
 	}
 
 	cms := p.h.Split(column.Comment, "|")
@@ -499,7 +507,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 				utils.CatchError(utils.Warninig, fmt.Errorf("table `%s`, column `%s`, option `%s` must have 2 arguments", p.currentNode.Name, p.currentField.Name, cm))
 			}
 		} else if p.h.HasPreffix(cm, "skip=") {
-			if p.config.Ent.Graphql != p.emptyGraphql {
+			if p.config.Ent.Graphql != nil {
 				opts := p.h.CleanSplit(cm, ",", "skip=(", ")")
 				for _, opt := range opts {
 					if len(SkipMap[opt]) > 0 {
@@ -510,9 +518,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 						utils.CatchError(utils.Warninig, fmt.Errorf("table `%s` column `%s`, option `%s` is not supported in skip", p.currentNode.Name, p.currentField.Name, opt))
 					}
 				}
-				if len(p.currentField.Skips) > 0 {
-					p.currentField.Annotations = append(p.currentField.Annotations, p.h.Join(p.currentField.Skips, "entgql.Skip(", ",", ")"))
-				}
+
 			} else {
 				utils.CatchError(utils.Warninig, fmt.Errorf("table `%s` column `%s`, skip only supported in graphql", p.currentNode.Name, p.currentField.Name))
 			}
