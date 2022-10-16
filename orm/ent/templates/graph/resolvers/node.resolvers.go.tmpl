@@ -6,7 +6,7 @@ package resolvers
 import (
 	"context"
 	"github.com/oklog/ulid/v2"
-	{{if .Config.Ent.Debug}}
+	{{if .Config.Debug}}
 	"log"
 	{{end}}
 	"{{.Config.Ent.Package}}/auth"
@@ -21,46 +21,55 @@ func (r *queryResolver) {{.Node.Name}}(ctx context.Context, id int) (*ent.{{.Nod
 
 // Create{{.Node.Name}} is the resolver for the create{{.Node.Name}} field.
 func (r *mutationResolver) Create{{.Node.Name}}(ctx context.Context, input ent.Create{{.Node.Name}}Input) (*ent.{{.Node.Name}}, error) {
+	{{- if .Config.Ent.Graphql.Subscription}}
 	entity, err := ent.FromContext(ctx).{{.Node.Name}}.Create().SetInput(input).Save(ctx)
 
 	if err == nil {
       go Notify{{.Node.Name}}Listenners(r, models.EventCreate, entity)
       go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventCreate)
    }
-
+	{{- else}}
+	entity := ent.FromContext(ctx).{{.Node.Name}}.Create().SetInput(input).Save(ctx)
+	{{- end}}
 	return entity, err
 }
 
 // Update{{.Node.Name}} is the resolver for the update{{.Node.Name}} field.
 func (r *mutationResolver) Update{{.Node.Name}}(ctx context.Context, id int, input ent.Update{{.Node.Name}}Input) (*ent.{{.Node.Name}}, error) {
-   entity, err := ent.FromContext(ctx).{{.Node.Name}}.UpdateOneID(id).SetInput(input).Save(ctx)
+   {{- if .Config.Ent.Graphql.Subscription}}
+	entity, err := ent.FromContext(ctx).{{.Node.Name}}.UpdateOneID(id).SetInput(input).Save(ctx)
    
    if err == nil {
       go Notify{{.Node.Name}}Listenners(r, models.EventUpdate, entity)
       go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventUpdate)
    }
-
+	{{- else}}
+	entity := ent.FromContext(ctx).{{.Node.Name}}.UpdateOneID(id).SetInput(input).Save(ctx)
+	{{- end}}
    return entity, err
 }
 
 // Delete{{.Node.Name}} is the resolver for the delete{{.Node.Name}} field.
 func (r *mutationResolver) Delete{{.Node.Name}}(ctx context.Context, id int) (*ent.{{.Node.Name}}, error) {
+	{{- if .Config.Ent.Graphql.Subscription}}
 	entity, err := r.Client.{{.Node.Name}}.Get(ctx, id)
-
 	if err == nil {
       go Notify{{.Node.Name}}Listenners(r, models.EventDelete, entity)
       go Notify{{.Pascals .Node.Name}}Listenners(r, models.EventDelete)
    }
-
+	{{- else}}
+	entity := r.Client.{{.Node.Name}}.Get(ctx, id)
+	{{- end}}
 	return entity, ent.FromContext(ctx).{{.Node.Name}}.DeleteOneID(id).Exec(ctx)
 }
 
+{{- if .Config.Ent.Graphql.Subscription}}
 // {{.Pascals .Node.Name}} is the resolver for the {{.Camels .Node.Name}} field.
 func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, events []models.Event, query *models.{{.Pascals .Node.Name}}QueryInput) (<-chan *ent.{{.Node.Name}}Connection, error) {
 	clientId := ulid.Make().String()
 	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}Connection, 1)
-	{{if .Config.Ent.Debug}}
+	{{if .Config.Debug}}
 	log.Printf("ClientID: %s | Events: %v | Type: {{.Pascals .Node.Name}} | Status: Connected", clientId, events)
 	{{end}}
 	r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
@@ -72,9 +81,10 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 	}
 	r.{{.Pascals .Node.Name}}ListennersMutext.Unlock()
 
+	
 	go func() {
 		<-ctx.Done()
-		{{if .Config.Ent.Debug}}
+		{{if .Config.Debug}}
 		log.Printf("ClientID: %s | Events: %v | Type: {{.Pascals .Node.Name}} | Status: Disconnected", clientId, events)
 		{{end}}
 		r.{{.Pascals .Node.Name}}ListennersMutext.Lock()
@@ -85,12 +95,13 @@ func (r *subscriptionResolver) {{.Pascals .Node.Name}}(ctx context.Context, even
 	return channel, nil
 }
 
+
 // {{.Node.Name}} is the resolver for the {{.Node.Name}} field.
 func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []models.Event, id int) (<-chan *ent.{{.Node.Name}}, error) {
 	clientId := ulid.Make().String()
 	events = RemoveDuplicates(events)
 	channel := make(chan *ent.{{.Node.Name}}, 1)
-	{{if .Config.Ent.Debug}}
+	{{if .Config.Debug}}
 	log.Printf("ClientID: %s | Events: %v | Type: {{.Node.Name}} | Status: Connected", clientId, events)
 	{{end}}
 	r.{{.Node.Name}}ListennersMutext.Lock()
@@ -104,7 +115,7 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []mode
 
 	go func() {
 		<-ctx.Done()
-		{{if .Config.Ent.Debug}}
+		{{if .Config.Debug}}
 		log.Printf("ClientID: %s | Events: %v | Type: {{.Node.Name}} | Status: Disconnected", clientId, events)
 		{{end}}
 		r.{{.Node.Name}}ListennersMutext.Lock()
@@ -115,13 +126,4 @@ func (r *subscriptionResolver) {{.Node.Name}}(ctx context.Context, events []mode
 	return channel, nil
 }
 
-{{if eq .Index 0}}
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// Subscription returns generated.SubscriptionResolver implementation.
-func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
-{{end}}
+{{- end}}

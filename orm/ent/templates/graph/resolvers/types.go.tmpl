@@ -5,7 +5,7 @@ import (
 	"{{.Config.Ent.Package}}/graph/models"
 	"context"
 )
-
+{{$g := .}}
 {{range .Nodes}}
 type {{.Name}}Listenner struct {
 	Context context.Context
@@ -14,10 +14,10 @@ type {{.Name}}Listenner struct {
 	Channel chan *ent.{{.Name}}
 }
 
-type {{.Pascals .Name}}Listenner struct {
+type {{$g.Pascals .Name}}Listenner struct {
 	Context context.Context
 	Channel chan *ent.{{.Name}}Connection
 	Events   []models.Event
-	Query   *models.{{.Pascals .Name}}QueryInput
+	Query   *models.{{$g.Pascals .Name}}QueryInput
 }
 {{end}}

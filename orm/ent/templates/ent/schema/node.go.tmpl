@@ -21,12 +21,14 @@ func ({{.Node.Name}}) Mixin() []ent.Mixin {
 }
 {{- end}}
 
+{{$g := .}}
+
 {{ $lenFields := len .Node.Fields }}{{- if gt $lenFields 0}}
 // Fields of the {{.Node.Name}}.
 func ({{.Node.Name}}) Fields() []ent.Field {
 	return []ent.Field{
 		{{- range .Node.Fields}}
-		field.{{.Type}}("{{.Name}}"){{.Join .Options "." "."}},
+		field.{{.Type}}("{{.Name}}"){{$g.Join .Options "." "."}},
 		{{- end}}
 	}
 }
@@ -37,11 +39,11 @@ func ({{.Node.Name}}) Fields() []ent.Field {
 func ({{.Node.Name}}) Edges() []ent.Edge {
 	return []ent.Edge{
 		{{- range .Node.Edges}}
-		edge.{{.Direction}}("{{.Name}}",{{.Node}}.Type){{.Join .Options "." "."}}{{.Join .Annotations ".Annotations(" ", " ")"}},
+		edge.{{.Direction}}("{{.Name}}",{{.Node}}.Type){{$g.Join .Options "." "."}}{{$g.Join .Annotations ".Annotations(" ", " ")"}},
 		{{- end}}
 	}
 }
-{{- end}}
+{{- end -}}
 
 {{ $lenAnnotations := len .Node.Annotations }}{{- if gt $lenAnnotations 0}}
 // Annotations of the .{{.Node.Name}}.

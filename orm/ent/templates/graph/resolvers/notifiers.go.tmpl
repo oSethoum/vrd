@@ -1,0 +1,47 @@
+package resolvers
+
+import (
+   "{{.Config.Ent.Package}}/graph/models"
+   "{{.Config.Ent.Package}}/ent"
+	{{if .Config.Debug}}
+	"log"
+	{{end}}
+)
+{{$g := .}}
+{{range .Nodes}}
+func Notify{{$g.Pascals .Name}}Listenners(r *mutationResolver, event models.Event) {
+	r.{{$g.Pascals .Name}}ListennersMutext.Lock()
+	for key := range r.{{$g.Pascals .Name}}Listenners {
+		if EventIn(event, r.{{$g.Pascals .Name}}Listenners[key].Events) {
+			query := r.{{$g.Pascals .Name}}Listenners[key].Query
+			if query == nil {
+				query = &models.{{$g.Pascals .Name}}QueryInput{}
+			}
+
+			entities, err := r.Client.{{.Name}}.Query().Paginate(r.{{$g.Pascals .Name}}Listenners[key].Context, query.After, query.First, query.Before, query.Last, ent.With{{.Name}}Filter(query.Where.Filter), ent.With{{.Name}}Order(query.OrderBy))
+
+			if err == nil {
+				r.{{$g.Pascals .Name}}Listenners[key].Channel <- entities
+				{{- if $g.Config.Debug}}
+				log.Printf("ClientID: %s | Event: %v | Type: {{$g.Pascals .Name}} | Action: Notify", key, event)
+				{{- end}}
+			}
+
+		}
+	}
+	r.{{$g.Pascals .Name}}ListennersMutext.Unlock()
+}
+
+func Notify{{.Name}}Listenners(r *mutationResolver, event models.Event, entity *ent.{{.Name}}) {
+	r.{{.Name}}ListennersMutext.Lock()
+	for key := range r.{{.Name}}Listenners {
+		if EventIn(event, r.{{.Name}}Listenners[key].Events) && r.{{.Name}}Listenners[key].ID == entity.ID {
+			r.{{.Name}}Listenners[key].Channel <- entity
+			{{- if $g.Config.Debug}}
+			log.Printf("ClientID: %s | Event: %s | Type: {{.Name}} | Action: Notify", key, event)
+			{{- end}}
+		}
+	}
+	r.{{.Name}}ListennersMutext.Unlock()
+}
+{{end}}

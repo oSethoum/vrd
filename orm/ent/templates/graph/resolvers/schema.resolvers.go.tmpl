@@ -18,10 +18,10 @@ func (r *queryResolver) Node(ctx context.Context, id int) (ent.Noder, error) {
 func (r *queryResolver) Nodes(ctx context.Context, ids []int) ([]ent.Noder, error) {
 	return r.Client.Noders(ctx, ids)
 }
-
+{{$g := .}}
 {{range .Nodes}}
-// {{.MultiPlural .Name}} is the resolver for the {{.MultiPlural .Name}} field.
-func (r *queryResolver) {{.MultiPlural .Name}}(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.{{.Name}}Order, where *ent.{{.Name}}WhereInput) (*ent.{{.Name}}Connection, error) {
+// {{$g.MultiPlural .Name}} is the resolver for the {{$g.MultiPlural .Name}} field.
+func (r *queryResolver) {{$g.MultiPlural .Name}}(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.{{.Name}}Order, where *ent.{{.Name}}WhereInput) (*ent.{{.Name}}Connection, error) {
 	return r.Client.{{.Name}}.Query().Paginate(ctx, after, first, before, last, ent.With{{.Name}}Order(orderBy), ent.With{{.Name}}Filter(where.Filter))
 }
 {{end}}

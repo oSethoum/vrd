@@ -13,16 +13,17 @@ import (
 // This file will not be regenerated automatically.
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
-
+{{$g := .}}
 type Resolver struct {
 	Client *ent.Client
-
+	{{- if .Config.Ent.Graphql.Subscription}}
 	{{range .Nodes}}
 	{{.Name}}Listenners        		  map[string]{{.Name}}Listenner
 	{{.Name}}ListennersMutext 			  sync.Mutex
-	{{.Pascals .Name}}Listenners       map[string]{{.Pascals .Name}}Listenner
-	{{.Pascals .Name}}ListennersMutext sync.Mutex
+	{{$g.Pascals .Name}}Listenners       map[string]{{$g.Pascals .Name}}Listenner
+	{{$g.Pascals .Name}}ListennersMutext sync.Mutex
 	{{end}}
+	{{- end}}
 }
 
 var schema *graphql.ExecutableSchema
@@ -32,13 +33,14 @@ func ExecutableSchema() graphql.ExecutableSchema {
 		schema = new(graphql.ExecutableSchema)
 		*schema = generated.NewExecutableSchema(generated.Config{Resolvers: &Resolver{
 			Client: db.Client,
-
+			{{- if .Config.Ent.Graphql.Subscription}}
 			{{range .Nodes}}
 			{{.Name}}Listenners:        			make(map[string]{{.Name}}Listenner),
 			{{.Name}}ListennersMutext:  			sync.Mutex{},
-			{{.Pascals .Name}}Listenners:       make(map[string]{{.Pascals .Name}}Listenner),
-			{{.Pascals .Name}}ListennersMutext: sync.Mutex{},
+			{{$g.Pascals .Name}}Listenners:       make(map[string]{{$g.Pascals .Name}}Listenner),
+			{{$g.Pascals .Name}}ListennersMutext: sync.Mutex{},
 			{{end}}
+			{{- end}}
 		}})
 	}
 

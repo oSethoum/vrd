@@ -28,7 +28,7 @@ func NewParser(vuerd types.Vuerd, config types.Config) *Parser {
 	return &Parser{
 		state: &State{
 			Nodes:  []*Node{},
-			Mixins: make(map[string]*Node, 0),
+			Mixins: make(map[string]*Node),
 		},
 		h:            types.Helper{},
 		vuerd:        &vuerd,
@@ -117,6 +117,7 @@ func (p *Parser) ParseTable(table *types.Table) {
 		p.currentNode.Imports = append(p.currentNode.Imports,
 			"\t\"entgo.io/ent/schema/mixin\"",
 		)
+
 		for _, cm := range cms {
 			opts := p.h.Split(cm, "=")
 
@@ -161,7 +162,7 @@ func (p *Parser) ParseTable(table *types.Table) {
 					utils.CatchError(utils.Warninig, fmt.Errorf("table `%s`, uknwon option `%s`", opts[0], table.Name))
 				}
 			} else if len(opts) > 0 {
-				utils.CatchError(utils.Warninig, fmt.Errorf("table `%s`,option `%s` has no value", opts[0], table.Name))
+				utils.CatchError(utils.Warninig, fmt.Errorf("table `%s`, option `%s` has no value", opts[0], table.Name))
 			}
 		}
 
