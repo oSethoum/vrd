@@ -1,5 +1,5 @@
 extend type Query {
-  {{.Node.Name}}(id: ID!): {{.Node.Name}}!
+  {{.Camel .Node.Name}}(id: ID!): {{.Node.Name}}!
 }
 
 extend type Mutation {

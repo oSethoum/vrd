@@ -30,6 +30,10 @@ func (Helper) Camels(s string) string {
 	return kace.Camel(pluralize.NewClient().Plural(s))
 }
 
+func (h *Helper) MCamels(s string) string {
+	return kace.Camel(h.MultiPlural(s))
+}
+
 func (Helper) Pascals(s string) string {
 	return kace.Pascal(pluralize.NewClient().Plural(s))
 }

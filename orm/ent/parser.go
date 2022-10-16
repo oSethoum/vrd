@@ -137,6 +137,7 @@ func (p *Parser) ParseTable(table *types.Table) {
 
 		if p.config.Ent.Graphql != nil {
 			p.currentNode.Annotations = append(p.currentNode.Annotations,
+				fmt.Sprintf("entgql.QueryField(\"%s\")", p.h.MCamels(p.currentNode.Name)),
 				"entgql.RelayConnection()",
 				"entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate())",
 			)
@@ -400,7 +401,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 		p.parseColumnDefault(p.h.Clean(column.Default), "Default")
 	}
 
-	if p.config.Ent.Graphql != nil && p.h.InArray(ComparableTypesMap, p.currentField.Type) {
+	if p.config.Ent.Graphql != nil && p.h.InArray(ComparableTypesMap, p.currentField.Type) && p.currentField.Name != "password" {
 		p.currentField.Annotations = append(p.currentField.Annotations, "entgql.OrderField(\""+p.h.UpperSnake(p.currentField.Name)+"\")")
 	}
 
