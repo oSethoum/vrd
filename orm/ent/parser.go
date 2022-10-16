@@ -368,16 +368,22 @@ func (p *Parser) parseColumnDefault(value string, option string) {
 }
 
 func (p *Parser) parseColumnOptions(column *types.Column) {
-	if p.config.Ent.Graphql != nil {
-		if p.h.InArray([]string{"created_at", "updated_at"}, column.Name) {
+	if p.h.InArray([]string{"created_at", "updated_at"}, column.Name) {
+		p.currentField.Options = append(p.currentField.Options, "Default(time.Now)")
+		if column.Name == "updated_at" {
+			p.currentField.Options = append(p.currentField.Options, "UpdateDefault(time.Now)")
+		}
+		if p.config.Ent.Graphql != nil {
 			p.currentField.Skips = append(p.currentField.Skips,
 				"entgql.SkipMutationCreateInput",
 				"entgql.SkipMutationUpdateInput",
 			)
 		}
+	}
 
-		if p.h.InArray([]string{"password"}, column.Name) {
-			p.currentField.Options = append(p.currentField.Options, "Sensitive()")
+	if p.h.InArray([]string{"password"}, column.Name) {
+		p.currentField.Options = append(p.currentField.Options, "Sensitive()")
+		if p.config.Ent.Graphql != nil {
 			p.currentField.Skips = append(p.currentField.Skips,
 				"entgql.SkipWhereInput",
 				"entgql.SkipType",
