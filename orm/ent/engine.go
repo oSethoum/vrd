@@ -3,7 +3,6 @@ package ent
 import (
 	"embed"
 	"fmt"
-	"os/exec"
 	"path"
 	"vrd/config"
 	"vrd/types"
@@ -26,8 +25,6 @@ func NewEngine() *Engine {
 	c := config.Init()
 	v := &types.Vuerd{}
 	utils.ReadJson(c.Input, v)
-	// show json
-	// utils.WriteJson("vrd/output.vuerd.json", v)
 	return &Engine{
 		config: c,
 		vuerd:  v,
@@ -81,7 +78,11 @@ func (e *Engine) Start() {
 		})
 	}
 
-	files := []string{"db/db.go", "server.go", "routes/routes.go", "handlers/handlers.go", "ent/generate.go"}
+	files := []string{"db/db.go", "ent/generate.go"}
+
+	if e.config.Ent.Echo {
+		files = append(files, "server.go", "routes/routes.go", "handlers/handlers.go")
+	}
 
 	if e.config.Ent.Graphql != nil {
 		files = append(files,
@@ -129,10 +130,6 @@ func (e *Engine) Start() {
 	}
 
 	e.writeFiles()
-
-	// format the files
-	err := exec.Command("go", "fmt", "./...").Run()
-	utils.CatchError(utils.Warninig, err)
 }
 
 func (e *Engine) writeFiles() {

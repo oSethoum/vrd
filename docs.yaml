@@ -19,19 +19,19 @@ Column:
    Default:
       time.Now                   # Default(time.Now)
    Comment:
-      skip=(op1,op2...):         # entgql.Skip(opt1,opt2...)
+      skip=op1,op2...:           # entgql.Skip(opt1,opt2...)
          all,                    # entgql.SkipAll()
          type,                   # entgql.SkipType()
-         where                   # entgql.SkipWhereInput()
-         create                  # entgql.SkipMutationCreateInput()
+         where,                  # entgql.SkipWhereInput()
+         create,                 # entgql.SkipMutationCreateInput()
          update,                 # entgql.SkipMutationUpdateInput()
       upd=value                  # UpdateDefault(value)
       minLen=value               # MinLen(value)
       maxLen=value               # MaxLen(value)
       min=value                  # Min(value)
       max=value                  # Max(value)
-      match=(regx)               # Match(regx)
-      range=(x,y)                # Range(x,y)
+      match=regx                 # Match(regx)
+      range=x,y                  # Range(x,y)
       -nem                       # NotEmpty()
       -pos                       # Positive()
       -neg                       # Negative()
@@ -57,8 +57,8 @@ Relationship:
    FK:
       Comment:
          # normal relationship
-         nr=(owner,todos)           # edge.To("todos", Todo.Type) | edge.form("owner", User.Type).Ref("todos")
-         cr=name                    # indicate name in m2m middle table
+         nr=owner,todos           # edge.To("todos", Todo.Type) | edge.form("owner", User.Type).Ref("todos")
          # case of m2n relationship with extra fields
-         nr=(From,users,User,todos,through)   # edge.From("users", User.Type).Ref("todos").Through("tableName", TableName.Type)
-         nr=(To,todos,Todo,through)           # edge.To("todos", Todo.Type).Through("tableName", TableName.Type)
+         dr=From,User      # edge.From("users", User.Type).Ref("todos")
+         dr=To,User   # edge.To("users", User.Type)
+         th=somthing       # .Through(something, Node.Type)

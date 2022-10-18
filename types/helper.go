@@ -164,3 +164,26 @@ func (h Helper) ValueOfType(v string, t string) (interface{}, bool) {
 
 	return nil, false
 }
+
+func (Helper) StringNumberCompare(s1, s2 string) int {
+	v1, _ := strconv.ParseFloat(s1, 32)
+	v2, _ := strconv.ParseFloat(s2, 32)
+
+	if v1 > v2 {
+		return 1
+	} else if v1 < v2 {
+		return -1
+	} else {
+		return 0
+	}
+}
+
+func (h *Helper) CleanArray(array []string) []string {
+	result := []string{}
+	for _, v := range array {
+		if !h.InArray(result, v) {
+			result = append(result, v)
+		}
+	}
+	return result
+}

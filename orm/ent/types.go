@@ -41,31 +41,15 @@ type Edge struct {
 }
 
 type Field struct {
-	ID          string      `json:"id"`
-	Name        string      `json:"name"`
-	Type        string      `json:"type"`
-	EnumValues  []string    `json:"enumValues"`
-	Comment     string      `json:"comment"`
-	Default     string      `json:"default"`
-	Options     []string    `json:"options"`
-	Skips       []string    `json:"skips"`
-	Annotations []string    `json:"annotations"`
-	Validation  *Validation `json:"validation"`
-}
-
-type Validation struct {
-	Max         float32    `json:"max"`
-	Min         float32    `json:"min"`
-	MinLen      uint       `json:"minLen"`
-	MaxLen      uint       `json:"maxLen"`
-	Range       [2]float32 `json:"range"`
-	Match       string     `json:"match"`
-	Positive    bool       `json:"positive"`
-	Negative    bool       `json:"negative"`
-	NonNegative bool       `json:"nonNegative"`
-	Immutable   bool       `json:"immutable"`
-	Sensitive   bool       `json:"sensitive"`
-	Optional    bool       `json:"optional"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	EnumValues  []string `json:"enumValues"`
+	Comment     string   `json:"comment"`
+	Default     string   `json:"default"`
+	Options     []string `json:"options"`
+	Skips       []string `json:"skips"`
+	Annotations []string `json:"annotations"`
 }
 
 type EntSchema struct {
@@ -96,4 +80,11 @@ type GQlResolver struct {
 	Update        string `json:"update"`
 	Delete        string `json:"delete"`
 	Subscriptions string `json:"subscriptions"`
+}
+
+type CommentOption struct {
+	Types   []string
+	Match   string
+	Extract string
+	Option  string
 }

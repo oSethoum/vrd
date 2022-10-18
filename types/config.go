@@ -12,8 +12,9 @@ type Ent struct {
 	Package     string   `yaml:"package"`
 	Graphql     *Graphql `yaml:"graphql"`
 	Privacy     bool     `yaml:"privacy"`
-	PrivacyNode bool     `yaml:"-"`
+	PrivacyNode bool     `yaml:"privacy_node"`
 	Auth        bool     `yaml:"auth"`
+	Echo        bool     `yaml:"echo"`
 }
 
 type Graphql struct {
