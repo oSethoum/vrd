@@ -132,13 +132,6 @@ var RegexMap = map[string][]CommentOption{
 			Option:  "Range",
 		},
 	},
-	"nr": {
-		{
-			Match:   `^nr=[A-z]+,[A-z]+$`,
-			Extract: `^nr=[A-z]+,[A-z]+$`,
-			Option:  "Range",
-		},
-	},
 }
 
 var SkipMapDefault = map[string][]string{

@@ -72,12 +72,12 @@ func (p *Parser) ParseTable(table *types.Table) {
 	}
 
 	if p.cNode.M2M {
-		//TODO: check if columns have dr and both have valid table and To and From
+		p.validateM2MTable(table)
 		if p.nonKeyColumnsCount(table) == 0 {
 			return
 		} else {
 			for _, column := range table.Columns {
-				if column.Ui.Fk {
+				if column.Ui.Fk && len(p.commentOptionValues(column.Comment, "dr=")) > 0 {
 					p.parseColumn(&column)
 				}
 			}
@@ -172,9 +172,7 @@ func (p *Parser) parseColumn(column *types.Column) {
 		utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, has no name", p.cNode.Name, column.Id))
 	}
 
-	if !p.h.InArray(p.cNode.Imports, "\"entgo.io/ent/schema/field\"") {
-		p.cNode.Imports = append(p.cNode.Imports, "\"entgo.io/ent/schema/field\"")
-	}
+	p.addImports("\t\"entgo.io/ent/schema/field\"")
 
 	p.cField = &Field{
 		ID:          column.Id,
@@ -205,12 +203,16 @@ func (p *Parser) parseColumn(column *types.Column) {
 func (p *Parser) parseRelationship(relationship *types.Relationship) {
 	startNode := p.node(relationship.Start.TableId)
 	endNode := p.node(relationship.End.TableId)
-	endField := p.field(endNode, relationship.End.ColumnIds[0])
+	endColumn := p.column(p.table(relationship.End.TableId), relationship.End.ColumnIds[0])
 
 	p.addImports("\t\"entgo.io/ent/schema/edge\"", startNode, endNode)
-
-	if endNode.M2M && len(endNode.Fields) > 0 {
-		relationship.RelationshipType = "NN"
+	// investigate this
+	if p.h.Contains(endNode.Comment, "-m2m") {
+		if len(endNode.Fields) > 0 && len(p.commentOptionValues(endColumn.Comment, "dr=")) > 0 {
+			relationship.RelationshipType = "NN"
+		} else {
+			relationship.RelationshipType = "M2M"
+		}
 	}
 
 	startEdge := &Edge{
@@ -227,13 +229,33 @@ func (p *Parser) parseRelationship(relationship *types.Relationship) {
 		Direction: "From",
 	}
 
-	p.cNode = endNode
-	p.cField = endField
-	names := p.commentOptionValues(endField.Comment, "nr=")
+	names := p.commentOptionValues(endColumn.Comment, "nr=")
 
 	if len(names) == 2 {
 		startEdge.Name = names[0]
 		endEdge.Name = names[1]
+	} else if len(names) == 1 {
+		startEdge.Name = names[0]
+	}
+
+	if p.h.Contains(endColumn.Comment, "-m2m") {
+		if p.h.Contains(endColumn.Comment, "-bi") {
+			if startNode.ID == endNode.ID {
+				relationship.RelationshipType = "M2MBI"
+			} else {
+				utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, -bi only allowed in same type edge", endNode.Name, endColumn.Name))
+			}
+		} else {
+			relationship.RelationshipType = "M2M"
+		}
+	} else {
+		if p.h.Contains(endColumn.Comment, "-bi") {
+			if startNode.ID == endNode.ID {
+				relationship.RelationshipType = "O2OBI"
+			} else {
+				utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, -bi only allowed in same type edge", endNode.Name, endColumn.Name))
+			}
+		}
 	}
 
 	switch relationship.RelationshipType {
@@ -248,18 +270,29 @@ func (p *Parser) parseRelationship(relationship *types.Relationship) {
 	case "OneN":
 		endEdge.Options = []string{"Unique()"}
 	case "NN":
-		// TODO: finish this one
-		// direction := p.commentOptionValues(endField.Comment, "dr=")
-		// through := p.commentOptionValues(endField.Comment, "th=")
+		direction := p.commentOptionValues(endColumn.Comment, "dr=")
+		through := p.commentOptionValues(endColumn.Comment, "th=")
 
-		// startEdge.Direction = direction[0]
-		// startEdge.Node = direction[1]
-		// endEdge.Direction = "To"
-	}
+		startEdge.Direction = direction[0]
+		startEdge.Node = direction[1]
 
-	startNode.Edges = append(startNode.Edges, *startEdge)
-	if len(endNode.Fields) > 0 {
-		endNode.Edges = append(endNode.Edges, *endEdge)
+		endEdge.Direction = "To"
+		endEdge.Options = append(endEdge.Options, fmt.Sprintf("Field(\"%s\")", endColumn.Name))
+
+		if len(through) == 0 {
+			through = append(through, p.h.Snakes(endNode.Name))
+		}
+
+		startEdge.Options = append(startEdge.Options, fmt.Sprintf("Through(\"%s\", %s.Type)", through[0], endNode.Name))
+
+	case "M2MBI":
+		startNode.Edges = append(startNode.Edges, *startEdge)
+	case "O2OBI":
+		startEdge.Options = append(startEdge.Options, "Unique()")
+		startNode.Edges = append(startNode.Edges, *startEdge)
+	case "M2M":
+		startNode.Edges = append(startNode.Edges, *startEdge)
+		endNode.Edges = append(startNode.Edges, *endEdge)
 	}
 }
 
@@ -322,7 +355,7 @@ func (p *Parser) appendFieldOptions(options []string, conditions ...bool) {
 }
 
 func (p *Parser) appendFieldOption(option string, conditions ...bool) {
-	if len(conditions) > 1 {
+	if len(conditions) > 0 {
 		for _, condition := range conditions {
 			if !condition {
 				return
@@ -374,7 +407,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 							}
 
 						} else {
-							utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`,error in option `%s`", p.cNode.Name, p.cField.Name, cm))
+							utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, error in option `%s`", p.cNode.Name, p.cField.Name, cm))
 						}
 					}
 				}
@@ -389,27 +422,36 @@ func (Parser) isMixin(name string) bool {
 	return strings.Contains(strings.ToLower(name), "mixin")
 }
 
-func (p *Parser) node(id string) *Node {
+func (p *Parser) table(id string) *types.Table {
 
-	for i := range p.state.Nodes {
-		if p.state.Nodes[i].ID == id {
-			return p.state.Nodes[i]
-		}
-	}
-
-	for key := range p.state.Mixins {
-		if p.state.Mixins[key].ID == id {
-			return p.state.Mixins[key]
+	for i := range p.vuerd.TableState.Tables {
+		if p.vuerd.TableState.Tables[i].Id == id {
+			return &p.vuerd.TableState.Tables[i]
 		}
 	}
 
 	return nil
 }
 
-func (Parser) field(node *Node, id string) *Field {
-	for i := 0; i < len(node.Fields); i++ {
-		if node.Fields[i].ID == id {
-			return &node.Fields[i]
+func (p *Parser) node(id string) *Node {
+	for _, n := range p.state.Nodes {
+		if n.ID == id {
+			return n
+		}
+	}
+
+	for _, n := range p.state.Mixins {
+		if n.ID == id {
+			return n
+		}
+	}
+	return nil
+}
+
+func (Parser) column(table *types.Table, id string) *types.Column {
+	for i := 0; i < len(table.Columns); i++ {
+		if table.Columns[i].Id == id {
+			return &table.Columns[i]
 		}
 	}
 	return nil
@@ -445,33 +487,44 @@ func (p *Parser) commentOptionValues(comment string, option string) []string {
 	if len(options) > 0 {
 		for _, op := range options {
 			if p.h.HasPreffix(op, option) {
-				// check if it's valid here
 				opts := p.h.Split(op, "=")
-				matched, err := regexp.MatchString(RegexMap[opts[0]][0].Match, op)
-				utils.CatchError(utils.Fatal, err)
-				if !matched {
-					utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, error in option `%s`", p.cNode.Name, p.cField.Name, op))
-				}
 				return p.h.Split(opts[1], ",")
 			}
 		}
 	}
 
-	return nil
+	return []string{}
 }
 
 func (p *Parser) nodeExist(name string) bool {
-	for i, _ := range p.state.Nodes {
-		if p.state.Nodes[i].Name == name {
+	for i, _ := range p.vuerd.TableState.Tables {
+		if p.vuerd.TableState.Tables[i].Name == name {
 			return true
 		}
 	}
-
-	for key, _ := range p.state.Mixins {
-		if p.state.Mixins[key].Name == name {
-			return true
-		}
-	}
-
 	return false
+}
+
+func (p *Parser) validateM2MTable(table *types.Table) {
+	found := []bool{false, false}
+	for _, column := range table.Columns {
+		if column.Ui.Fk {
+			dr := p.commentOptionValues(column.Comment, "dr=")
+			if len(dr) == 2 {
+				if dr[0] == "To" {
+					found[0] = true
+				}
+				if dr[0] == "From" {
+					found[1] = true
+				}
+				if !p.nodeExist(dr[1]) {
+					utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`, column `%s`, dr(%s,%s) %s does not exist", p.cNode.Name, column.Name, dr[0], dr[1], dr[1]))
+				}
+			}
+		}
+	}
+
+	if !found[0] || !found[1] {
+		utils.CatchError(utils.Fatal, fmt.Errorf("table `%s`,fk columns are not set correctly dr=(To/From, Type)", p.cNode.Name))
+	}
 }

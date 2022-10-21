@@ -59,6 +59,8 @@ Relationship:
          # normal relationship
          nr=owner,todos           # edge.To("todos", Todo.Type) | edge.form("owner", User.Type).Ref("todos")
          # case of m2n relationship with extra fields
-         dr=From,User      # edge.From("users", User.Type).Ref("todos")
-         dr=To,User   # edge.To("users", User.Type)
-         th=somthing       # .Through(something, Node.Type)
+         dr=From,User             # edge.From("users", User.Type).Ref("todos")
+         dr=To,User               # edge.To("users", User.Type)
+         th=somthing              # .Through(something, Node.Type)  
+         -m2m                     # indicate many 2 many retationship without middle table
+         -bi                      # bidirectional relationship has to be same type tho

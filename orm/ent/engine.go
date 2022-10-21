@@ -43,6 +43,8 @@ func (e *Engine) Start() {
 		utils.WriteJson("vrd/output.json", e.state)
 	}
 
+	// os.Exit(0)
+
 	data := Data{
 		Config: e.config,
 		Nodes:  e.state.Nodes,
