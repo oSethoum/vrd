@@ -374,6 +374,7 @@ func (p *Parser) parseColumnOptions(column *types.Column) {
 	p.appendFieldOptions([]string{"Optional()", "Nillable()"}, !column.Option.NotNull)
 	p.appendFieldOption(p.parseColumnDefault(p.h.Clean(column.Default), "Default"), len(p.h.Clean(column.Default)) > 0)
 	p.appendFieldOptions(OptionMapDefault[p.cField.Name])
+	p.addImports(ImportsDefault[p.cField.Name])
 
 	if p.config.Ent.Graphql != nil {
 		p.appendFieldSkips(SkipMapDefault[p.cField.Name])

@@ -145,3 +145,8 @@ var OptionMapDefault = map[string][]string{
 	"created_at": {"Default(time.Now)"},
 	"updated_at": {"Default(time.Now)", "UpdateDefault(time.Now)"},
 }
+
+var ImportsDefault = map[string]string{
+	"created_at": "\"time\"",
+	"updated_at": "\"time\"",
+}
