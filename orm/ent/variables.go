@@ -142,6 +142,6 @@ var SkipMapDefault = map[string][]string{
 
 var OptionMapDefault = map[string][]string{
 	"password":   {"Sensitive()"},
-	"created_at": {"Default(\"time.Now\")"},
-	"updated_at": {"Default(\"time.Now\")", "UpdateDefault(\"time.Now\")"},
+	"created_at": {"Default(time.Now)"},
+	"updated_at": {"Default(time.Now)", "UpdateDefault(time.Now)"},
 }
