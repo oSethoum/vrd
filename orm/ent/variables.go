@@ -147,6 +147,6 @@ var OptionMapDefault = map[string][]string{
 }
 
 var ImportsDefault = map[string]string{
-	"created_at": "\"time\"",
-	"updated_at": "\"time\"",
+	"created_at": "\t\"time\"",
+	"updated_at": "\t\"time\"",
 }
