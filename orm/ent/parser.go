@@ -369,7 +369,7 @@ func (p *Parser) appendFieldOption(option string, conditions ...bool) {
 }
 
 func (p *Parser) parseColumnOptions(column *types.Column) {
-	p.appendFieldOption("Unique", column.Option.Unique)
+	p.appendFieldOption("Unique()", column.Option.Unique)
 	p.appendFieldOption("AutoIncrement()", column.Option.AutoIncrement)
 	p.appendFieldOptions([]string{"Optional()", "Nillable()"}, !column.Option.NotNull)
 	p.appendFieldOption(p.parseColumnDefault(p.h.Clean(column.Default), "Default"), len(p.h.Clean(column.Default)) > 0)
