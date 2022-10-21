@@ -497,7 +497,7 @@ func (p *Parser) commentOptionValues(comment string, option string) []string {
 }
 
 func (p *Parser) nodeExist(name string) bool {
-	for i, _ := range p.vuerd.TableState.Tables {
+	for i := range p.vuerd.TableState.Tables {
 		if p.vuerd.TableState.Tables[i].Name == name {
 			return true
 		}
