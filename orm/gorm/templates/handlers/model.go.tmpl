@@ -105,7 +105,7 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 }
 {{if .Swagger}}
 // @Summary Delete one {{.Model.Name}}
-// @Tags    {{.Camel .Model.Name}}
+// @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
 // @Param   id  path     int true "{{.Model.Name}} ID"

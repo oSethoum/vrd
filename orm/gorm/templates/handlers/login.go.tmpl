@@ -49,7 +49,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	access := make(map[string]string)
-	err = json.Unmarshal(user.Role.Access, &access)
+	err = json.Unmarshal(*user.Role.Access, &access)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())

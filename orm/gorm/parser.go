@@ -72,7 +72,7 @@ func (p *Parser) Start() {
 				gormOps = append(gormOps, "not null")
 			}
 
-			if !p.e.h.InArray([]string{"datatypes.JSON"}, column.Type) && !p.e.h.Contains(c.Comment, "json:ignore") {
+			if !p.e.h.Contains(c.Comment, "json:ignore") {
 				column.Type = "*" + column.Type
 			}
 
