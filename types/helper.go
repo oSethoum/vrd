@@ -10,7 +10,16 @@ import (
 
 type Helper struct{}
 
+func (Helper) SpecialCamels(s string) string {
+	s = strings.ReplaceAll(s, "ID", "Id")
+	return kace.Camel(pluralize.NewClient().Plural(s))
+}
+func (Helper) SpecialCamel(s string) string {
+	s = strings.ReplaceAll(s, "ID", "Id")
+	return kace.Camel(pluralize.NewClient().Singular(s))
+}
 func (Helper) Camel(s string) string {
+	s = strings.ReplaceAll(s, "ID", "Id")
 	return kace.Camel(pluralize.NewClient().Singular(s))
 }
 

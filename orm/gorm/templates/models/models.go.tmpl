@@ -1,0 +1,29 @@
+package models
+
+import (
+{{- range .Imports}}
+  "{{.}}"
+{{- end}}
+)
+
+{{$g := .}}
+type (
+  {{- if $g.GormModel}}
+  Model struct {
+    ID        *uint           `json:"id,omitempty" gorm:"primarykey"`
+	  CreatedAt *time.Time      `json:"createdAt,omitempty"`
+	  UpdatedAt *time.Time      `json:"updatedAt,omitempty"`
+	  DeletedAt *gorm.DeletedAt `json:"deletedAt,omitempty" gorm:"index"`
+  }
+  {{- end}}
+  {{range $_, $m := .Models}}
+  {{$m.Name}} struct {
+  {{- if $g.GormModel}}
+    Model
+  {{- end}}
+  {{- range $_, $c := $m.Columns}}
+    {{$c.Name}} {{$c.Type}} {{$c.Options}}
+  {{- end}}
+  }
+  {{end}}
+)

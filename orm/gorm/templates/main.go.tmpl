@@ -1,0 +1,13 @@
+package main
+
+import (
+	"{{.Package}}/db"
+	"{{.Package}}/routes"
+	"log"
+)
+
+func main() {
+	db.Connect()
+	app := routes.New()
+	log.Fatalln(app.Listen(":5000"))
+}

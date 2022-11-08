@@ -1,0 +1,10 @@
+package handlers
+
+type Query struct {
+	Deleted *bool   `json:"deleted"`
+	Like    *string `json:"like"`
+	Limit   *int    `json:"limit"`
+	Offset  *uint   `json:"offset"`
+	Preload *string `json:"preload"`
+	Select  *string `json:"select"`
+}

@@ -1,0 +1,49 @@
+package middlewares
+
+import (
+	"{{.Package}}/config"
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
+)
+
+var methodMap = map[string]uint8{
+	"GET":    0,
+	"POST":   1,
+	"PATCH":  2,
+	"DELETE": 3,
+}
+
+func resource(path string) string {
+	ss := strings.Split(path, "/")
+	if len(ss) == 2 {
+		return ss[1]
+	}
+	return ss[2]
+}
+
+func Authenticated(c *fiber.Ctx) error {
+	auth := c.GetReqHeaders()["Authorization"]
+	if auth == "" {
+		return c.Status(fiber.StatusUnauthorized).SendString("Uauthenticated")
+	}
+	tokenString := strings.Replace(auth, "Bearer ", "", 1)
+	t, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(config.Secret), nil
+	})
+
+	if !t.Valid {
+		return c.Status(fiber.StatusUnauthorized).SendString("Uauthenticated")
+	}
+
+	claims, _ := t.Claims.(jwt.MapClaims)
+	access, _ := claims["access"].(map[string]string)
+	table := resource(c.Path())
+
+	if access[table] != "" && access[table][methodMap[c.Method()]] != '1' {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+
+	return c.Next()
+}

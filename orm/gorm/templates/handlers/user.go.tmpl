@@ -1,0 +1,79 @@
+package handlers
+
+import (
+	"app/backend/db"
+	"app/backend/models"
+
+	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm/clause"
+)
+
+func QueryUser(c *fiber.Ctx) error {
+	q := new(Query)
+	err := c.QueryParser(q)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	many := new([]models.User)
+	ParseQuery(db.Client, q).Find(many)
+	return c.JSON(many)
+}
+
+func OneUser(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+	q := new(Query)
+	one := new(models.User)
+	if err = ParseQuery(db.Client, q).First(one, id).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	return c.JSON(one)
+}
+
+func CreateUser(c *fiber.Ctx) error {
+	one := new(models.User)
+	err := c.BodyParser(one)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	hash, _ := bcrypt.GenerateFromPassword([]byte(*one.Password), bcrypt.MinCost)
+	one.Hash = string(hash)
+	one.Password = nil
+	if err = db.Client.Create(one).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	return c.JSON(one)
+}
+
+func UpdateUser(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	one := new(models.User)
+	db.Client.Find(one, id)
+	body := new(map[string]interface{})
+	err = c.BodyParser(body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	if err = db.Client.Model(one).Omit("id").Updates(body).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	return c.Status(fiber.StatusOK).JSON(one)
+}
+
+func DeleteUser(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	one := models.User{}
+	if err = db.Client.Clauses(clause.Returning{}).Delete(&one, id).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	return c.Status(fiber.StatusOK).JSON(one)
+}

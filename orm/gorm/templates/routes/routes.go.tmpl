@@ -1,0 +1,42 @@
+package routes
+
+import (
+	"{{.Package}}/handlers"
+	"{{.Package}}/middlewares"
+	"encoding/json"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/websocket/v2"
+)
+
+func New() *fiber.App {
+	app := fiber.New(fiber.Config{
+		JSONEncoder: json.Marshal,
+		JSONDecoder: json.Unmarshal,
+	})
+
+	app.Use(recover.New())
+  {{- if .Debug}}
+	app.Use(logger.New())
+  {{- end}}
+	handlers.New()
+  {{if .Auth}}
+	app.Post("/login", handlers.Login)
+	api := app.Group("/api", middlewares.Authenticated)
+	{{else}}
+	api := app.Group("/api")
+  {{end}}
+	{{if .Socket}}
+	api.Get("/subscribe", websocket.New(handlers.Subscribe))
+	{{end}}
+	{{$g := .}}
+  {{range $_, $m := .Models}}
+	api.Get("/{{$g.Camel $m.Name}}/", handlers.Query{{$m.Name}})
+	api.Get("/{{$g.Camel $m.Name}}/:id", handlers.One{{$m.Name}})
+	api.Post("/{{$g.Camel $m.Name}}/", handlers.Create{{$m.Name}})
+	api.Patch("/{{$g.Camel $m.Name}}/:id", handlers.Update{{$m.Name}})
+	api.Delete("/{{$g.Camel $m.Name}}/:id", handlers.Delete{{$m.Name}})
+  {{end}}
+	return app
+}
