@@ -30,12 +30,25 @@ database: sqlite3
 ent:
   output: ./output
   package: app
+  echo: true
   privacy: true
+  privacy_node: false
   auth: true
   graphql:
     file_upload: true
     subscription: true
     relay_connection: true
+
+# gorm config
+gorm:
+  output: ./output
+  gorm_model: true
+  package: app
+  fiber: true
+  auth: true
+  encryption: true
+  file_upload: true
+  socket: true
 ```
 
 ## Ent
