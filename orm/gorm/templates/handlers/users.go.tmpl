@@ -1,38 +1,67 @@
 package handlers
 
 import (
-	"app/backend/db"
-	"app/backend/models"
+	"{{.Package}}/db"
+	"{{.Package}}/models"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm/clause"
 )
-
+{{if .Swagger}}
+// @Summary Query User
+// @Tags    users
+// @Accept  json
+// @Produce json
+// @Param   query query    handlers.ManyQuery false "Query"
+// @Success 200   {array}  models.User
+// @Failure 400   {string} messgae
+// @Failure 401   {string} messgae
+// @Router  /users [get]
+{{- end}}
 func QueryUser(c *fiber.Ctx) error {
-	q := new(Query)
+	q := new(ManyQuery)
 	err := c.QueryParser(q)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 	many := new([]models.User)
-	ParseQuery(db.Client, q).Find(many)
+	ParseManyQuery(db.Client, q).Find(many)
 	return c.JSON(many)
 }
-
+{{if .Swagger}}
+// @Summary Get User
+// @Tags    users
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "User ID"
+// @Success 200 {object} models.User
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /users/:id [get]
+{{- end}}
 func OneUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
-	q := new(Query)
+	q := new(OneQuery)
 	one := new(models.User)
-	if err = ParseQuery(db.Client, q).First(one, id).Error; err != nil {
+	if err = ParseOneQuery(db.Client, q).First(one, id).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 	return c.JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Create One User
+// @Tags    users
+// @Accept  json
+// @Produce json
+// @Success 200 {object} models.User
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /users/ [post]
+{{- end}}
 func CreateUser(c *fiber.Ctx) error {
 	one := new(models.User)
 	err := c.BodyParser(one)
@@ -47,7 +76,17 @@ func CreateUser(c *fiber.Ctx) error {
 	}
 	return c.JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Update One User
+// @Tags    users
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "User ID"
+// @Success 200 {object} models.User
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /users/:id [patch]
+{{- end}}
 func UpdateUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -65,7 +104,17 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Delete One User
+// @Tags    users
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "User ID"
+// @Success 200 {object} models.User
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /users/:id [delete]
+{{- end}}
 func DeleteUser(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {

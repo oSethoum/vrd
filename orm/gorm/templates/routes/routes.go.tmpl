@@ -7,6 +7,12 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	{{- if .Debug}}
+	"github.com/gofiber/fiber/v2/middleware/logger"
+  {{- end}}
+	{{if .Swagger}}
+	swagger "github.com/arsmn/fiber-swagger/v2"
+	{{end}}
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -30,13 +36,16 @@ func New() *fiber.App {
 	{{if .Socket}}
 	api.Get("/subscribe", websocket.New(handlers.Subscribe))
 	{{end}}
+	{{if .Swagger}}
+	app.Get("/docs/*", swagger.HandlerDefault)
+	{{end}}
 	{{$g := .}}
   {{range $_, $m := .Models}}
-	api.Get("/{{$g.Camel $m.Name}}/", handlers.Query{{$m.Name}})
-	api.Get("/{{$g.Camel $m.Name}}/:id", handlers.One{{$m.Name}})
-	api.Post("/{{$g.Camel $m.Name}}/", handlers.Create{{$m.Name}})
-	api.Patch("/{{$g.Camel $m.Name}}/:id", handlers.Update{{$m.Name}})
-	api.Delete("/{{$g.Camel $m.Name}}/:id", handlers.Delete{{$m.Name}})
+	api.Get("/{{$g.Camels $m.Name}}/", handlers.Query{{$m.Name}})
+	api.Get("/{{$g.Camels $m.Name}}/:id", handlers.One{{$m.Name}})
+	api.Post("/{{$g.Camels $m.Name}}/", handlers.Create{{$m.Name}})
+	api.Patch("/{{$g.Camels $m.Name}}/:id", handlers.Update{{$m.Name}})
+	api.Delete("/{{$g.Camels $m.Name}}/:id", handlers.Delete{{$m.Name}})
   {{end}}
 	return app
 }

@@ -69,7 +69,7 @@ func (e *Engine) Start() {
 
 		if data.Auth {
 			files = append(files,
-				"handlers/user.go",
+				"handlers/users.go",
 				"handlers/login.go",
 				"middlewares/auth.go",
 			)
@@ -77,7 +77,7 @@ func (e *Engine) Start() {
 
 		if data.Socket {
 			files = append(files,
-				"handlrs/socket.go",
+				"handlers/socket.go",
 			)
 		}
 	}
@@ -93,6 +93,9 @@ func (e *Engine) Start() {
 
 	for _, m := range e.state.Models {
 		data.Model = m
+		if m.Name == "User" {
+			continue
+		}
 		e.files = append(e.files,
 			&types.File{
 				Path:   fmt.Sprintf("handlers/%s.go", e.h.Snakes(m.Name)),

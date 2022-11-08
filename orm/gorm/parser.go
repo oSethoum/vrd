@@ -45,7 +45,7 @@ func (p *Parser) Start() {
 				if !p.e.h.InArray(p.e.imports, "time") {
 					p.e.imports = append(p.e.imports, "time")
 				}
-			case "datatypes.Json":
+			case "datatypes.JSON":
 				if !p.e.h.InArray(p.e.imports, "gorm.io/datatypes") {
 					p.e.imports = append(p.e.imports, "gorm.io/datatypes")
 				}
@@ -72,7 +72,9 @@ func (p *Parser) Start() {
 				gormOps = append(gormOps, "not null")
 			}
 
-			column.Type = "*" + column.Type
+			if !p.e.h.InArray([]string{"datatypes.JSON"}, column.Type) && !p.e.h.Contains(c.Comment, "json:ignore") {
+				column.Type = "*" + column.Type
+			}
 
 			if c.Option.Unique {
 				gormOps = append(gormOps, "unique")
@@ -86,7 +88,7 @@ func (p *Parser) Start() {
 
 			if p.e.h.Contains(p.e.h.Clean(c.Comment), "gorm:ignore") {
 				gorm = "gorm:\"-\""
-			} else {
+			} else if len(gormOps) > 0 {
 				gorm = fmt.Sprintf("gorm:\"%s\"", strings.Join(gormOps, ", "))
 			}
 			column.Options = fmt.Sprintf("`%s %s`", json, gorm)
@@ -113,7 +115,7 @@ func (p *Parser) Start() {
 			start.Columns[Name] = Column{
 				Name:    Name,
 				Type:    fmt.Sprintf("[]%s", end.Name),
-				Options: fmt.Sprintf("`json:\"%s\"`", p.e.h.SpecialCamels(end.Name)),
+				Options: fmt.Sprintf("`json:\"%s,omitempty\"`", p.e.h.SpecialCamels(end.Name)),
 			}
 		case "OneOnly", "ZeroOne":
 			eName := p.e.h.Pascal(end.Name)

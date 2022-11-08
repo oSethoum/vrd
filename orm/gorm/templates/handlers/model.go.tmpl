@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 {{if .Swagger}}
-// @Summary Get many {{.Model.Name}}
+// @Summary Query {{.Model.Name}}
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
@@ -28,7 +28,7 @@ func Query{{.Model.Name}}(c *fiber.Ctx) error {
 	return c.JSON(many)
 }
 {{if .Swagger}}
-// @Summary Get one {{.Model.Name}}
+// @Summary Get {{.Model.Name}}
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
@@ -50,12 +50,11 @@ func One{{.Model.Name}}(c *fiber.Ctx) error {
 	return c.JSON(one)
 }
 {{if .Swagger}}
-// @Summary Create one {{.Model.Name}}
+// @Summary Create One {{.Model.Name}}
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
 // @Success 200 {object} models.{{.Model.Name}}
-// @Param   id  path     int true "{{.Model.Name}} ID"
 // @Failure 400 {string} message
 // @Failure 401 {string} message
 // @Router  /{{.Camels .Model.Name}}/ [post]
@@ -72,7 +71,7 @@ func Create{{.Model.Name}}(c *fiber.Ctx) error {
 	return c.JSON(one)
 }
 {{if .Swagger}}
-// @Summary Update one {{.Model.Name}}
+// @Summary Update One {{.Model.Name}}
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
@@ -99,7 +98,7 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
-	if err = db.Client.Model.Name(one).Omit("id").Updates(body).Error; err != nil {
+	if err = db.Client.Model(one).Omit("id").Updates(body).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 	return c.Status(fiber.StatusOK).JSON(one)
@@ -113,7 +112,7 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 // @Success 200 {object} models.{{.Model.Name}}
 // @Failure 400 {string} message
 // @Failure 401 {string} message
-// @Router  /{{.Camel .Model.Name}}/:id [delete]
+// @Router  /{{.Camels .Model.Name}}/:id [delete]
 {{- end}}
 func Delete{{.Model.Name}}(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")

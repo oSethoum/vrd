@@ -10,7 +10,7 @@ var GormTypesMap = map[string]string{
 	"string":   "string",
 	"lob":      "string",
 	"date":     "time.Time",
-	"json":     "datatypes.Json",
+	"json":     "datatypes.JSON",
 	"datetime": "time.Time",
 	"time":     "time.Time",
 }

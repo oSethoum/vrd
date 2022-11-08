@@ -39,7 +39,8 @@ func Login(c *fiber.Ctx) error {
 
 	user := new(models.User)
 
-	if err = db.Client.Preload("Role").Where("username = ? OR email = ?", input.Identity, input.Identity).First(user).Error; err != nil {
+	// add OR for the columns that represents identity
+	if err = db.Client.Preload("Role").Where("username = ?", input.Identity).First(user).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("invalid credentails")
 	}
 
