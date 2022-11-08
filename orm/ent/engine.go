@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"path"
-	"vrd/config"
 	"vrd/types"
 	"vrd/utils"
 )
@@ -21,8 +20,7 @@ type Engine struct {
 }
 
 // Create the Ent engine
-func NewEngine() *Engine {
-	c := config.Init()
+func NewEngine(c *types.Config) *Engine {
 	v := &types.Vuerd{}
 	utils.ReadJson(c.Input, v)
 	return &Engine{
