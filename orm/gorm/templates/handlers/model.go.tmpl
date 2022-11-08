@@ -3,31 +3,63 @@ package handlers
 import (
 	"{{.Package}}/db"
 	"{{.Package}}/models"
+	{{$l := len .Model.JsonFields}}
+	{{- if gt $l 0}}
 	"encoding/json"
-
+	{{- end}}
 	"github.com/gofiber/fiber/v2"
 )
-
+{{if .Swagger}}
+// @Summary Get many {{.Model.Name}}
+// @Tags    {{.Camels .Model.Name}}
+// @Accept  json
+// @Produce json
+// @Param   query query    handlers.ManyQuery false "Query"
+// @Success 200   {array}  models.{{.Model.Name}}
+// @Failure 400   {string} messgae
+// @Failure 401   {string} messgae
+// @Router  /{{.Camels .Model.Name}} [get]
+{{- end}}
 func Query{{.Model.Name}}(c *fiber.Ctx) error {
 	many := new([]models.{{.Model.Name}})
-	q := new(Query)
+	q := new(ManyQuery)
 	c.QueryParser(q)
-	ParseQuery(db.Client, q).Find(many)
+	ParseManyQuery(db.Client, q).Find(many)
 	return c.JSON(many)
 }
-
+{{if .Swagger}}
+// @Summary Get one {{.Model.Name}}
+// @Tags    {{.Camels .Model.Name}}
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "{{.Model.Name}} ID"
+// @Success 200 {object} models.{{.Model.Name}}
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /{{.Camels .Model.Name}}/:id [get]
+{{- end}}
 func One{{.Model.Name}}(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
-	q := new(Query)
+	q := new(OneQuery)
 	c.QueryParser(q)
 	one := new(models.{{.Model.Name}})
-	ParseQuery(db.Client, q).First(one, id)
+	ParseOneQuery(db.Client, q).First(one, id)
 	return c.JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Create one {{.Model.Name}}
+// @Tags    {{.Camels .Model.Name}}
+// @Accept  json
+// @Produce json
+// @Success 200 {object} models.{{.Model.Name}}
+// @Param   id  path     int true "{{.Model.Name}} ID"
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /{{.Camels .Model.Name}}/ [post]
+{{- end}}
 func Create{{.Model.Name}}(c *fiber.Ctx) error {
 	one := new(models.{{.Model.Name}})
 	err := c.BodyParser(one)
@@ -39,7 +71,17 @@ func Create{{.Model.Name}}(c *fiber.Ctx) error {
 	}
 	return c.JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Update one {{.Model.Name}}
+// @Tags    {{.Camels .Model.Name}}
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "{{.Model.Name}} ID"
+// @Success 200 {object} models.{{.Model.Name}}
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /{{.Camels .Model.Name}}/:id [patch]
+{{- end}}
 func Update{{.Model.Name}}(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -49,10 +91,11 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 	db.Client.Find(one, id)
 	body := make(map[string]interface{})
 	err = c.BodyParser(&body)
-	// Update case of JOSN
-	if body["access"] != nil {
-		body["access"], _ = json.Marshal(body["access"])
+	{{range .Model.JsonFields}}
+	if body["{{.}}"] != nil {
+		body["{{.}}"], _ = json.Marshal(body["{{.}}"])
 	}
+	{{end}}
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
@@ -61,7 +104,17 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(one)
 }
-
+{{if .Swagger}}
+// @Summary Delete one {{.Model.Name}}
+// @Tags    {{.Camel .Model.Name}}
+// @Accept  json
+// @Produce json
+// @Param   id  path     int true "{{.Model.Name}} ID"
+// @Success 200 {object} models.{{.Model.Name}}
+// @Failure 400 {string} message
+// @Failure 401 {string} message
+// @Router  /{{.Camel .Model.Name}}/:id [delete]
+{{- end}}
 func Delete{{.Model.Name}}(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {

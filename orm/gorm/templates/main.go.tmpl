@@ -4,8 +4,21 @@ import (
 	"{{.Package}}/db"
 	"{{.Package}}/routes"
 	"log"
+	{{- if .Swagger}}
+	_ "{{.Package}}docs"
+	{{- end}}
 )
 
+{{- if .Swagger}}
+// @title       App
+// @version     1.0
+// @description This is an API Application
+
+// @license.name Apache 2.0
+// @license.url  http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath /api
+{{- end}}
 func main() {
 	db.Connect()
 	app := routes.New()

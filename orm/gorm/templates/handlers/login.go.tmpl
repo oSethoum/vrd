@@ -12,11 +12,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Input struct {
+	Identity string `json:"identity"`
+	Password string `json:"password"`
+}
+
+{{- if .Swagger}}
+// @Summary Login
+// @Tags    login
+// @Accept  json
+// @Produce json
+// @Param   input body    handlers.Input true "Credentails"
+// @Success 200   {object} map[string]interface{}  
+// @Failure 500   {string} messgae
+// @BasePath /
+// @Router  /login [post]
+{{- end}}
 func Login(c *fiber.Ctx) error {
-	input := new(struct {
-		Identity string `json:"identity"`
-		Password string `json:"password"`
-	})
+	input := new(Input)
 
 	err := c.BodyParser(input)
 

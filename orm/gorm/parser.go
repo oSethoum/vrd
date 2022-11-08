@@ -24,12 +24,13 @@ func (p *Parser) Start() {
 	}
 	for _, t := range p.e.vuerd.TableState.Tables {
 		model := Model{
-			Name:    t.Name,
-			Columns: make(map[string]Column),
+			Name:      t.Name,
+			Columns:   make(map[string]Column),
+			GormModel: !p.e.h.Contains(p.e.h.Clean(t.Comment), "model:ignore"),
 		}
 
 		for _, c := range t.Columns {
-			if (p.e.config.Gorm.GormModel || p.e.h.Contains(p.e.h.Clean(c.Comment), "model:ignore")) && p.e.h.InArray(ignored, c.Name) {
+			if (p.e.config.Gorm.GormModel || p.e.h.Contains(p.e.h.Clean(t.Comment), "model:ignore")) && p.e.h.InArray(ignored, c.Name) {
 				continue
 			}
 
@@ -41,9 +42,14 @@ func (p *Parser) Start() {
 
 			switch column.Type {
 			case "time.Time":
-				p.e.imports = append(p.e.imports, "time")
+				if !p.e.h.InArray(p.e.imports, "time") {
+					p.e.imports = append(p.e.imports, "time")
+				}
 			case "datatypes.Json":
-				p.e.imports = append(p.e.imports, "gorm.io/datatypes")
+				if !p.e.h.InArray(p.e.imports, "gorm.io/datatypes") {
+					p.e.imports = append(p.e.imports, "gorm.io/datatypes")
+				}
+				model.JsonFields = append(model.JsonFields, p.e.h.SpecialCamel(c.Name))
 			}
 
 			if p.e.h.Contains(p.e.h.Clean(c.Comment), "json:ignore") {

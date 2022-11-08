@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"embed"
+	"fmt"
 	"path"
 	"vrd/types"
 	"vrd/utils"
@@ -45,6 +46,7 @@ func (e *Engine) Start() {
 		Database:  e.config.Database,
 		Auth:      e.config.Gorm.Auth,
 		Socket:    e.config.Gorm.Socket,
+		Swagger:   e.config.Gorm.Swagger,
 		Debug:     e.config.Debug,
 		Imports:   e.imports,
 		GormModel: e.config.Gorm.GormModel,
@@ -93,7 +95,7 @@ func (e *Engine) Start() {
 		data.Model = m
 		e.files = append(e.files,
 			&types.File{
-				Path:   "handlers/model.go",
+				Path:   fmt.Sprintf("handlers/%s.go", e.h.Snakes(m.Name)),
 				Buffer: e.parseTemplate("handlers/model.go.tmpl", data),
 			},
 		)

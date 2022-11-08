@@ -18,7 +18,7 @@ type (
   {{- end}}
   {{range $_, $m := .Models}}
   {{$m.Name}} struct {
-  {{- if $g.GormModel}}
+  {{- if and $m.GormModel $g.GormModel}}
     Model
   {{- end}}
   {{- range $_, $c := $m.Columns}}

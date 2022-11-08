@@ -27,6 +27,7 @@ type Gorm struct {
 	FileUpload bool   `yaml:"file_uplaod"`
 	Socket     bool   `yaml:"socket"`
 	GormModel  bool   `yaml:"gorm_model"`
+	Swagger    bool   `yaml:"swagger"`
 }
 
 type Graphql struct {

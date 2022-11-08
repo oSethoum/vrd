@@ -13,6 +13,7 @@ type Data struct {
 	Socket    bool
 	Auth      bool
 	Fiber     bool
+	Swagger   bool
 	Debug     bool
 	GormModel bool
 	Models    map[string]Model
@@ -21,8 +22,10 @@ type Data struct {
 }
 
 type Model struct {
-	Name    string
-	Columns map[string]Column
+	Name       string
+	Columns    map[string]Column
+	GormModel  bool
+	JsonFields []string
 }
 
 type Column struct {
