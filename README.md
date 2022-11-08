@@ -108,9 +108,7 @@ Relationship:
 ```
 
 ## Supported ORMs
-
-We currently support only [Ent](https://entgo.io/) but we are planning to support more (gorm, prisma) int the future.
-
-## Contributions
-
-we don't accept contributions at the moment, this is meant for personal use, but you are welcome to use it.
+- [Ent](https://entgo.io/)
+- [Gorm](https://gorm.io/)
+## Planned
+- [Prisma](https://www.prisma.io/)
