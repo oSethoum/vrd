@@ -1,0 +1,5 @@
+go mod tidy 
+go fmt ./...
+{{- if .Swagger}}
+swag init --parseDependency --parseInternal
+{{- end}}

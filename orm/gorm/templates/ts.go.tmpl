@@ -1,0 +1,17 @@
+{{- $g := .}}
+{{- range $_, $m := .Models}}
+export interface {{$m.Name}} {
+  {{- if and $m.GormModel $g.GormModel}}
+  id:number;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string;
+  {{- end}}
+  {{- range $_, $c := $m.Columns}}
+  {{- $l := len $c.TsName}}
+  {{- if gt $l 0|}}
+  {{$c.TsName}}: {{$c.TsType}};
+  {{- end}}
+  {{- end}}
+}
+{{end}}

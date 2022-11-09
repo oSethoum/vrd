@@ -28,6 +28,7 @@ type Gorm struct {
 	Socket     bool   `yaml:"socket"`
 	GormModel  bool   `yaml:"gorm_model"`
 	Swagger    bool   `yaml:"swagger"`
+	Typescrpit bool   `yaml:"typescript"`
 }
 
 type Graphql struct {

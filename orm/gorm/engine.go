@@ -8,6 +8,8 @@ import (
 	"vrd/utils"
 )
 
+//TODO: support DTO
+
 //go:embed templates
 var Templates embed.FS
 
@@ -35,7 +37,8 @@ func NewEngine(c *types.Config) *Engine {
 }
 
 func (e *Engine) Start() {
-	NewParser(e).Start()
+	p := &Parser{e}
+	p.Start()
 	// debug mode only
 	if e.config.Debug {
 		utils.WriteJson("vrd/output.json", e.state)
@@ -103,6 +106,18 @@ func (e *Engine) Start() {
 			},
 		)
 	}
+
+	if e.config.Gorm.Typescrpit {
+		e.files = append(e.files, &types.File{
+			Path:   "types/types.ts",
+			Buffer: e.parseTemplate("ts.go.tmpl", data),
+		})
+	}
+
+	e.files = append(e.files, &types.File{
+		Path:   "vrd.sh",
+		Buffer: e.parseTemplate("vrd.sh.go.tmpl", data),
+	})
 
 	e.writeFiles()
 }

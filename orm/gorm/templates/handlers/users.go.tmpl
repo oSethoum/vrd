@@ -57,10 +57,11 @@ func OneUser(c *fiber.Ctx) error {
 // @Tags    users
 // @Accept  json
 // @Produce json
+// @Param   body  body     models.User true "Create User Body"
 // @Success 200 {object} models.User
 // @Failure 400 {string} message
 // @Failure 401 {string} message
-// @Router  /users/ [post]
+// @Router  /users [post]
 {{- end}}
 func CreateUser(c *fiber.Ctx) error {
 	one := new(models.User)
@@ -74,6 +75,7 @@ func CreateUser(c *fiber.Ctx) error {
 	if err = db.Client.Create(one).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("users")
 	return c.JSON(one)
 }
 {{if .Swagger}}
@@ -82,6 +84,7 @@ func CreateUser(c *fiber.Ctx) error {
 // @Accept  json
 // @Produce json
 // @Param   id  path     int true "User ID"
+// @Param   body  body     models.User true "Update User Body"
 // @Success 200 {object} models.User
 // @Failure 400 {string} message
 // @Failure 401 {string} message
@@ -102,6 +105,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	if err = db.Client.Model(one).Omit("id").Updates(body).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("users")
 	return c.Status(fiber.StatusOK).JSON(one)
 }
 {{if .Swagger}}
@@ -120,9 +124,10 @@ func DeleteUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
-	one := models.User{}
-	if err = db.Client.Clauses(clause.Returning{}).Delete(&one, id).Error; err != nil {
+	one := new(models.User)
+	if err = db.Client.Delete(one, id).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("users")
 	return c.Status(fiber.StatusOK).JSON(one)
 }

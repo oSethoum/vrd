@@ -10,12 +10,6 @@ type Parser struct {
 	e *Engine
 }
 
-func NewParser(e *Engine) *Parser {
-	return &Parser{
-		e: e,
-	}
-}
-
 func (p *Parser) Start() {
 	p.e.state.Models = make(map[string]Model)
 	ignored := []string{"id", "created_at", "updated_at", "deleted_at"}
@@ -56,6 +50,8 @@ func (p *Parser) Start() {
 				json = "json:\"-\""
 			} else {
 				json = fmt.Sprintf("json:\"%s,omitempty\"", p.e.h.SpecialCamel(c.Name))
+				column.TsName = p.e.h.SpecialCamel(c.Name) + "?"
+				column.TsType = TsTypesMap[types.VuerdTypes[p.e.h.Lower(c.DataType)]]
 			}
 
 			gormOps := []string{}
@@ -105,24 +101,29 @@ func (p *Parser) Start() {
 		sName := p.e.h.Pascal(start.Name)
 		end.Columns[sName] = Column{
 			Name:    sName,
-			Type:    fmt.Sprintf("*%s", start.Name),
+			Type:    "*" + sName,
 			Options: fmt.Sprintf("`json:\"%s,omitempty\"`", p.e.h.SpecialCamel(start.Name)),
+			TsName:  p.e.h.SpecialCamel(sName) + "?",
+			TsType:  sName,
 		}
 
+		eName := p.e.h.Pascal(end.Name)
 		switch r.RelationshipType {
 		case "ZeroN", "OneN":
-			Name := p.e.h.Pascals(end.Name)
-			start.Columns[Name] = Column{
-				Name:    Name,
-				Type:    fmt.Sprintf("[]%s", end.Name),
-				Options: fmt.Sprintf("`json:\"%s,omitempty\"`", p.e.h.SpecialCamels(end.Name)),
-			}
-		case "OneOnly", "ZeroOne":
-			eName := p.e.h.Pascal(end.Name)
 			start.Columns[eName] = Column{
 				Name:    eName,
-				Type:    fmt.Sprintf("*%s", end.Name),
+				Type:    "[]" + eName,
+				Options: fmt.Sprintf("`json:\"%s,omitempty\"`", p.e.h.SpecialCamels(end.Name)),
+				TsName:  p.e.h.SpecialCamels(end.Name) + "?",
+				TsType:  eName + "[]",
+			}
+		case "OneOnly", "ZeroOne":
+			start.Columns[eName] = Column{
+				Name:    eName,
+				Type:    "*" + eName,
 				Options: fmt.Sprintf("`json:\"%s,omitempty\"`", p.e.h.SpecialCamel(end.Name)),
+				TsName:  p.e.h.SpecialCamel(end.Name) + "?",
+				TsType:  eName,
 			}
 		}
 	}

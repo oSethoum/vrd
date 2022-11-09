@@ -11,15 +11,14 @@ import (
 type Helper struct{}
 
 func (Helper) SpecialCamels(s string) string {
-	s = strings.ReplaceAll(s, "ID", "Id")
-	return kace.Camel(pluralize.NewClient().Plural(s))
+	s = kace.Camel(pluralize.NewClient().Plural(s))
+	return strings.ReplaceAll(s, "ID", "Id")
 }
 func (Helper) SpecialCamel(s string) string {
-	s = strings.ReplaceAll(s, "ID", "Id")
-	return kace.Camel(pluralize.NewClient().Singular(s))
+	s = kace.Camel(pluralize.NewClient().Singular(s))
+	return strings.ReplaceAll(s, "ID", "Id")
 }
 func (Helper) Camel(s string) string {
-	s = strings.ReplaceAll(s, "ID", "Id")
 	return kace.Camel(pluralize.NewClient().Singular(s))
 }
 

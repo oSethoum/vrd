@@ -31,5 +31,7 @@ type Model struct {
 type Column struct {
 	Name    string
 	Type    string
+	TsName  string
+	TsType  string
 	Options string
 }

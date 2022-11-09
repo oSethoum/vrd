@@ -54,10 +54,11 @@ func One{{.Model.Name}}(c *fiber.Ctx) error {
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
+// @Param   body  body     models.{{.Model.Name}} true "Create {{.Model.Name}} Body"
 // @Success 200 {object} models.{{.Model.Name}}
 // @Failure 400 {string} message
 // @Failure 401 {string} message
-// @Router  /{{.Camels .Model.Name}}/ [post]
+// @Router  /{{.Camels .Model.Name}} [post]
 {{- end}}
 func Create{{.Model.Name}}(c *fiber.Ctx) error {
 	one := new(models.{{.Model.Name}})
@@ -68,6 +69,7 @@ func Create{{.Model.Name}}(c *fiber.Ctx) error {
 	if err = db.Client.Create(one).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("{{.Camels .Model.Name}}")
 	return c.JSON(one)
 }
 {{if .Swagger}}
@@ -75,7 +77,8 @@ func Create{{.Model.Name}}(c *fiber.Ctx) error {
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
-// @Param   id  path     int true "{{.Model.Name}} ID"
+// @Param   id    path     int true "{{.Model.Name}} ID"
+// @Param   body  body     models.{{.Model.Name}} true "Update {{.Model.Name}} Body"
 // @Success 200 {object} models.{{.Model.Name}}
 // @Failure 400 {string} message
 // @Failure 401 {string} message
@@ -101,10 +104,11 @@ func Update{{.Model.Name}}(c *fiber.Ctx) error {
 	if err = db.Client.Model(one).Omit("id").Updates(body).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("{{.Camels .Model.Name}}")
 	return c.Status(fiber.StatusOK).JSON(one)
 }
 {{if .Swagger}}
-// @Summary Delete one {{.Model.Name}}
+// @Summary Delete One {{.Model.Name}}
 // @Tags    {{.Camels .Model.Name}}
 // @Accept  json
 // @Produce json
@@ -124,5 +128,6 @@ func Delete{{.Model.Name}}(c *fiber.Ctx) error {
 	if err = db.Client.Delete(one, id).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+	Invalidate("{{.Camels .Model.Name}}")
 	return c.JSON(one)
 }
