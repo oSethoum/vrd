@@ -125,3 +125,4 @@ Relationship:
 - [Gorm](https://gorm.io/)
 ## Planned
 - [Prisma](https://www.prisma.io/)
+- [Bun] (https://bun.uptrace.dev/)
